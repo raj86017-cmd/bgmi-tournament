@@ -1,0 +1,8 @@
+{
+  "appId": "com.bgmi.tournament",
+  "appName": "BGMI Tournament",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
