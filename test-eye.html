@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta charset="utf-8">
+<title>Eye Test</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.card{background:#16213e;padding:30px;border-radius:12px;width:100%;max-width:360px}
+h2{color:#fff;text-align:center;margin-bottom:20px;font-size:18px}
+.fg{margin-bottom:15px}
+.fg label{display:block;color:#a0a0b0;font-size:12px;margin-bottom:5px}
+.pass-wrap{position:relative;display:flex;align-items:center}
+.pass-wrap input{width:100%;padding:12px;padding-right:46px;border:1px solid #333;border-radius:6px;background:#0f3460;color:#fff;font-size:16px}
+.eye-btn{position:absolute;right:0;top:0;height:100%;width:44px;background:none;border:none;cursor:pointer;font-size:22px;z-index:10;display:flex;align-items:center;justify-content:center;color:#a0a0b0;user-select:none;-webkit-user-select:none;outline:none;touch-action:manipulation}
+.eye-btn:active{opacity:0.6}
+.btn{width:100%;padding:12px;background:#e94560;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer;margin-top:10px}
+.btn:active{opacity:0.8}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>👁️ Eye Button Test</h2>
+  <div class="fg"><label>Password</label>
+    <div class="pass-wrap">
+      <input type="password" id="testPass" placeholder="Password">
+      <button type="button" class="eye-btn" id="testEye" onclick="togglePass()">👁️</button>
+    </div>
+  </div>
+  <div style="color:#8a8a9a;font-size:12px;text-align:center;margin-top:8px">👆 Eye button dabao — password show/hide hona chahiye</div>
+  <button class="btn" onclick="alert('Button click kaam kar raha hai! ✅')">🔘 Test Button (click)</button>
+</div>
+
+<script>
+function togglePass() {
+  var inp = document.getElementById('testPass');
+  var btn = document.getElementById('testEye');
+  if (!inp || !btn) { alert('Element nahi mila!'); return; }
+  var pw = inp.type === 'password';
+  inp.type = pw ? 'text' : 'password';
+  btn.textContent = pw ? '🙈' : '👁️';
+  btn.innerHTML = pw ? '🙈' : '👁️';
+}
+</script>
+</body>
+</html>
