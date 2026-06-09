@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BGMI Tournament</string>
+    <string name="title_activity_main">BGMI Tournament</string>
+    <string name="package_name">com.bgmi.tournament</string>
+    <string name="custom_url_scheme">com.bgmi.tournament</string>
+</resources>

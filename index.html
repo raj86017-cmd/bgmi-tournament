@@ -132,6 +132,19 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .room-label{font-size:.7em;color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
 .room-value{color:var(--green);font-size:1.2em;letter-spacing:3px;}
 
+/* SUPPORT */
+.support-card{background:linear-gradient(135deg,rgba(255,70,85,.08),rgba(0,212,255,.05));border:1px solid var(--acc);border-radius:12px;padding:16px;margin-bottom:12px;}
+.faq-item{background:var(--card2);border:1px solid var(--brd);border-radius:8px;margin-bottom:6px;overflow:hidden;}
+.faq-q{padding:10px 12px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.9em;}
+.faq-q::after{content:'▼';font-size:.7em;color:var(--acc);transition:transform .3s;}
+.faq-item.open .faq-q::after{transform:rotate(180deg);}
+.faq-a{padding:0 12px;max-height:0;overflow:hidden;transition:all .3s;font-size:.85em;color:var(--dim);line-height:1.5;}
+.faq-item.open .faq-a{max-height:200px;padding:0 12px 10px;}
+.issue-card{background:var(--card2);border:1px solid var(--brd);border-radius:8px;padding:10px;margin-bottom:6px;}
+.issue-card .issue-status{font-size:.7em;padding:2px 6px;border-radius:4px;font-weight:700;}
+.issue-card .issue-status.pending{background:rgba(255,215,0,.15);color:var(--gold);}
+.issue-card .issue-status.resolved{background:rgba(0,255,136,.15);color:var(--green);}
+
 /* BOTTOM NAV */
 .btm-nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:8px 4px;background:rgba(10,10,15,.98);border-top:1px solid var(--brd);z-index:100;}
 .btm-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--dim);font-family:'Rajdhani',sans-serif;font-size:.65em;font-weight:700;cursor:pointer;padding:4px 8px;}
@@ -209,6 +222,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <!-- ===== PLAYER PAGES ===== -->
   <div class="page" id="page-my-tournaments"></div>
   <div class="page" id="page-my-matches"></div>
+  <div class="page" id="page-support"></div>
+  <div class="page" id="page-admin-support"></div>
 
 </div>
 
@@ -304,7 +319,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="modal">
     <h2>💳 Entry Fee Payment</h2>
     <div id="pay-content"></div>
-    <div class="btn-grp" style="margin-top:12px">
+    <div style="text-align:center;margin-top:10px"><span style="color:var(--dim);font-size:.8em">Payment issue hai? </span><a href="#" onclick="closeModal('payment');openReportIssue()" style="color:var(--acc);font-size:.8em;font-weight:700">🚨 Report Issue</a></div>
+    <div class="btn-grp" style="margin-top:10px">
       <button class="btn btn-g btn-sm" onclick="confirmPayment()">✅ Payment Done</button>
       <button class="btn btn-s btn-sm" onclick="closeModal('payment')">Close</button>
     </div>
@@ -332,8 +348,43 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="btn-grp" style="margin-top:12px">
       <button class="btn btn-g btn-sm" id="join-btn" onclick="joinTournament()">✅ Join Now</button>
       <button class="btn btn-s btn-sm" onclick="closeModal('join-tournament')">Close</button>
-    </div>
-  </div>
+      </div>
+      </div>
+
+      <!-- Report Issue (Payment Problem) -->
+      <div class="modal-bg" id="modal-report-issue">
+      <div class="modal">
+      <h2>🚨 Report Payment Issue</h2>
+      <div style="color:var(--dim);font-size:.85em;margin-bottom:12px">Payment kiya lekin confirm nahi hua? Neeche form bharo — hum 24 ghante mein reply karenge!</div>
+      <div class="fg"><label>Tournament Name</label><select id="ri-tournament"></select></div>
+      <div class="fg"><label>Team Name</label><input type="text" id="ri-team" placeholder="Tumhari team ka naam"></div>
+      <div class="fg"><label>Payment Amount (₹)</label><input type="number" id="ri-amount" placeholder="Kitne pay kiye"></div>
+      <div class="fg"><label>UPI Transaction ID</label><input type="text" id="ri-txn" placeholder="UPI Ref / Transaction ID"></div>
+      <div class="fg"><label>Payment Date & Time</label><input type="datetime-local" id="ri-date"></div>
+      <div class="fg"><label>Phone Number</label><input type="tel" id="ri-phone" placeholder="WhatsApp number"></div>
+      <div class="fg"><label>Problem Description</label><textarea id="ri-desc" rows="3" placeholder="Kya hua describe karo..." style="width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--brd);border-radius:8px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:1em;resize:vertical"></textarea></div>
+      <div class="btn-grp">
+        <button class="btn btn-p btn-sm" onclick="submitIssue()">📤 Submit</button>
+        <button class="btn btn-s btn-sm" onclick="closeModal('report-issue')">Cancel</button>
+      </div>
+      </div>
+      </div>
+
+      <!-- Admin Reply Modal -->
+      <div class="modal-bg" id="modal-admin-reply">
+      <div class="modal">
+      <h2>💬 Reply to Issue</h2>
+      <div id="admin-reply-content"></div>
+      <div class="fg"><label>Your Reply</label><textarea id="admin-reply-text" rows="3" placeholder="Reply likho..." style="width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--brd);border-radius:8px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:1em;resize:vertical"></textarea></div>
+      <div class="fg"><label>Status Update</label>
+        <select id="admin-reply-status"><option value="pending">⏳ Pending</option><option value="resolved">✅ Resolved</option><option value="rejected">❌ Rejected</option></select>
+      </div>
+      <div class="btn-grp">
+        <button class="btn btn-p btn-sm" onclick="sendReply()">📤 Send Reply</button>
+        <button class="btn btn-s btn-sm" onclick="closeModal('admin-reply')">Cancel</button>
+      </div>
+      </div>
+      </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -346,10 +397,11 @@ let D={
   teams:[],
   matches:[],
   activities:[],
+  issues:[],
   settings:{name:'',upi:'',upiname:'',whatsapp:'',contact:''}
 };
 let currentUser=null;
-let _payTeamId=null,_payTournamentId=null,_bcMatchId=null,_joinTournamentId=null;
+let _payTeamId=null,_payTournamentId=null,_bcMatchId=null,_joinTournamentId=null,_replyIssueId=null;
 
 function save(){localStorage.setItem('bgmi-v2',JSON.stringify(D));}
 function load(){const d=localStorage.getItem('bgmi-v2');if(d){try{D={...D,...JSON.parse(d)};}catch(e){}}}
@@ -431,22 +483,26 @@ function buildNav(){
      <button class="nav-btn" data-page="tournaments">🏆 Tournaments</button>
      <button class="nav-btn" data-page="teams">👥 Teams</button>
      <button class="nav-btn" data-page="matches">⚔️ Matches</button>
-     <button class="nav-btn" data-page="leaderboard">📊 Rank</button>`:
+     <button class="nav-btn" data-page="leaderboard">📊 Rank</button>
+     <button class="nav-btn" data-page="admin-support">🚨 Support</button>`:
     `<button class="nav-btn active" data-page="dashboard">🏠 Home</button>
      <button class="nav-btn" data-page="my-tournaments">🏆 My Tournaments</button>
      <button class="nav-btn" data-page="my-matches">⚔️ My Matches</button>
-     <button class="nav-btn" data-page="leaderboard">📊 Rank</button>`;
+     <button class="nav-btn" data-page="leaderboard">📊 Rank</button>
+     <button class="nav-btn" data-page="support">🆘 Help</button>`;
 
   const btmHtml=isAdmin?
     `<button class="btm-btn active" data-page="dashboard"><span>🏠</span>Home</button>
      <button class="btm-btn" data-page="tournaments"><span>🏆</span>Tournaments</button>
      <button class="btm-btn" data-page="teams"><span>👥</span>Teams</button>
      <button class="btm-btn" data-page="matches"><span>⚔️</span>Matches</button>
-     <button class="btm-btn" data-page="leaderboard"><span>📊</span>Rank</button>`:
+     <button class="btm-btn" data-page="leaderboard"><span>📊</span>Rank</button>
+     <button class="btm-btn" data-page="admin-support"><span>🚨</span>Support</button>`:
     `<button class="btm-btn active" data-page="dashboard"><span>🏠</span>Home</button>
      <button class="btm-btn" data-page="my-tournaments"><span>🏆</span>Tournaments</button>
      <button class="btm-btn" data-page="my-matches"><span>⚔️</span>Matches</button>
-     <button class="btm-btn" data-page="leaderboard"><span>📊</span>Rank</button>`;
+     <button class="btm-btn" data-page="leaderboard"><span>📊</span>Rank</button>
+     <button class="btm-btn" data-page="support"><span>🆘</span>Help</button>`;
 
   document.getElementById('topnav').innerHTML=navHtml;
   document.getElementById('btnav').innerHTML=btmHtml;
@@ -695,8 +751,9 @@ function calcPts(pos,kills){const pp={1:50,2:35,3:28,4:22,5:16,6:12,7:9,8:7,9:5,
 function renderAll(){
   const isAdmin=currentUser?.role==='admin';
   if(isAdmin){renderDashAdmin();renderTournamentsAdmin();renderTeamsAdmin();renderMatchesAdmin();}
-  else{renderDashPlayer();renderMyTournaments();renderMyMatches();}
+  else{renderDashPlayer();renderMyTournaments();renderMyMatches();renderSupport();}
   renderLeaderboard();
+  if(isAdmin)renderAdminSupport();
 }
 
 // ----- ADMIN -----
@@ -826,6 +883,115 @@ function renderLeaderboard(){
   const sorted=Object.values(st).sort((a,b)=>b.pts-a.pts||b.kills-a.kills);
   const el2=document.getElementById('page-leaderboard');
   el2.innerHTML=`<h2 style="font-family:Orbitron;color:var(--gold);margin-bottom:12px;font-size:1em">📊 Leaderboard</h2>`+(sorted.length?sorted.map((s,i)=>{const avg=s.matches?(s.pl.reduce((a,b)=>a+b,0)/s.matches).toFixed(1):'-';return`<div class="lb"><div class="lb-r ${i===0?'r1':i===1?'r2':i===2?'r3':''}">#${i+1}</div><div class="lb-i"><div class="lb-n"><span class="tag" style="background:rgba(0,212,255,.15);color:var(--blue)">${s.team.tag}</span> ${s.team.name}</div><div class="lb-d">${s.matches} matches • ${s.kills} kills • Avg #${avg}</div></div><div class="lb-s"><div class="lb-p">${s.pts}</div><div class="lb-k">PTS</div></div></div>`;}).join(''):'<div class="empty"><div class="empty-i">📊</div>Add matches & results</div>');
+}
+
+// ==================== UTILS ====================
+// ==================== SUPPORT ====================
+function submitIssue(){
+  const tid=document.getElementById('ri-tournament').value;
+  const team=document.getElementById('ri-team').value.trim();
+  const amount=document.getElementById('ri-amount').value;
+  const txn=document.getElementById('ri-txn').value.trim();
+  const date=document.getElementById('ri-date').value;
+  const phone=document.getElementById('ri-phone').value.trim();
+  const desc=document.getElementById('ri-desc').value.trim();
+  if(!team||!amount||!txn){toast('❌ Team, Amount aur Transaction ID zaruri hai!');return;}
+  const issue={id:gid(),userId:currentUser.id,userName:currentUser.name,tournamentId:tid,team,amount:parseInt(amount),txn,date,phone,desc,status:'pending',reply:'',created:Date.now()};
+  D.issues.push(issue);
+  addAct(`🚨 Payment issue reported by "${currentUser.name}" — ₹${amount}`);
+  save();closeModal('report-issue');renderAll();toast('✅ Issue submitted! Admin ko notify ho gaya.');
+  ['ri-team','ri-amount','ri-txn','ri-phone','ri-desc'].forEach(id=>{if(document.getElementById(id))document.getElementById(id).value='';});
+}
+
+function toggleFaq(el){el.parentElement.classList.toggle('open');}
+
+function openReportIssue(){
+  const sel=document.getElementById('ri-tournament');
+  if(sel)sel.innerHTML=D.tournaments.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  openModal('report-issue');
+}
+
+function renderSupport(){
+  const el=document.getElementById('page-support');if(!el)return;
+  const myIssues=D.issues.filter(i=>i.userId===currentUser.id);
+  const contactLine=D.settings.whatsapp?`WhatsApp: ${D.settings.whatsapp}`:D.settings.contact?`Contact: ${D.settings.contact}`:D.settings.upi?`UPI: ${D.settings.upi}`:'Abhi available nahi';
+  el.innerHTML=`
+    <h2 style="font-family:Orbitron;color:var(--acc);font-size:1em;margin-bottom:12px">🆘 Help & Support</h2>
+    <div class="support-card">
+      <h3 style="color:var(--blue);margin-bottom:8px;font-size:.95em">📞 Contact Organizer</h3>
+      <div style="color:var(--text);font-size:.9em;margin-bottom:8px">${contactLine}</div>
+      ${D.settings.whatsapp?`<a href="https://wa.me/${D.settings.whatsapp.replace(/[^0-9]/g,'')}" target="_blank" class="btn btn-w btn-sm">📱 WhatsApp Karo</a>`:''}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="color:var(--gold);font-size:.9em">❓ Frequently Asked Questions</h3>
+    </div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">💳 Payment nahi gaya, kya karu?</div><div class="faq-a">Agar aapne UPI se payment kiya lekin app mein confirm nahi ho raha, toh "Report Issue" button dabao. UPI Transaction ID zarur daalo. Admin 24 ghante mein verify karke payment confirm kar dega.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">🔑 Room ID kahan milega?</div><div class="faq-a">Match start hone se pehle admin "Room ID Broadcast" karega — WhatsApp pe seedha aayega. Ya app mein "My Matches" section mein dekho.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">🏆 Prize kaise milega?</div><div class="faq-a">Tournament khatam hone ke baad admin winner ko directly UPI pe bhejega. Leaderboard mein rank dekho.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">👥 Team kaise banau?</div><div class="faq-a">Dashboard pe "Add Team" button dabao. Team name, tag, players ka naam daalo. Max 4 players ki team bana sakte ho.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">🎮 Tournament kaise join karu?</div><div class="faq-a">"My Tournaments" mein jao → kisi bhi upcoming tournament pe "Join" button dabao → apni team select karo. Entry fee hai toh payment karo.</div></div>
+    <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">🔄 Payment verify kab hoga?</div><div class="faq-a">Admin usually 1-2 ghante mein verify kar leta hai. Agar 24 ghante ho gaye toh "Report Issue" karo.</div></div>
+    <div class="btn-grp" style="margin-top:14px">
+      <button class="btn btn-p btn-sm" onclick="openReportIssue()">🚨 Report Payment Issue</button>
+    </div>
+    ${myIssues.length?`<div style="margin-top:16px"><h3 style="color:var(--blue);font-size:.9em;margin-bottom:8px">📋 My Issues</h3>${myIssues.map(i=>{
+      const t=D.tournaments.find(x=>x.id===i.tournamentId);
+      return`<div class="issue-card"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:.9em">₹${i.amount} — ${t?.name||'?'}</span><span class="issue-status ${i.status}">${i.status==='resolved'?'✅ Resolved':i.status==='rejected'?'❌ Rejected':'⏳ Pending'}</span></div><div style="font-size:.78em;color:var(--dim);margin-top:4px">Team: ${i.team} • TXN: ${i.txn} • ${fmtDate(i.created)}</div>${i.reply?`<div style="margin-top:6px;padding:8px;background:var(--bg);border-radius:6px;font-size:.85em;border-left:3px solid var(--green)"><b style="color:var(--green)">Admin Reply:</b> ${i.reply}</div>`:''}</div>`;
+    }).join('')}</div>`:''}
+  `;
+}
+
+function renderAdminSupport(){
+  const el=document.getElementById('page-admin-support');if(!el)return;
+  const pending=D.issues.filter(i=>i.status==='pending');
+  const resolved=D.issues.filter(i=>i.status!=='pending');
+  el.innerHTML=`
+    <h2 style="font-family:Orbitron;color:var(--acc);font-size:1em;margin-bottom:12px">🚨 Support Issues</h2>
+    <div class="stats">
+      <div class="stat"><div class="stat-v">${pending.length}</div><div class="stat-l">Pending</div></div>
+      <div class="stat"><div class="stat-v">${D.issues.length}</div><div class="stat-l">Total</div></div>
+    </div>
+    ${pending.length?`<h3 style="color:var(--gold);font-size:.85em;margin-bottom:8px">⏳ Pending Issues</h3>${pending.map(i=>{
+      const t=D.tournaments.find(x=>x.id===i.tournamentId);
+      return`<div class="issue-card" style="border-left:3px solid var(--gold)"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700">${i.userName}</span><span class="issue-status pending">⏳ Pending</span></div><div style="margin-top:4px;font-size:.85em"><b>₹${i.amount}</b> — ${t?.name||'?'}<br><span style="color:var(--dim)">Team: ${i.team} • TXN: ${i.txn}</span></div>${i.desc?`<div style="margin-top:4px;font-size:.8em;color:var(--dim)">"${i.desc}"</div>`:''}${i.phone?`<div style="font-size:.78em;color:var(--blue);margin-top:2px">📱 ${i.phone}</div>`:''}<div style="font-size:.75em;color:var(--dim);margin-top:2px">${fmtDate(i.created)}</div><div class="btn-grp"><button class="btn btn-sm btn-p" onclick="openAdminReply('${i.id}')">💬 Reply</button><button class="btn btn-sm btn-g" onclick="resolveIssue('${i.id}','${currentUser.name}')">✅ Resolve</button></div></div>`;
+    }).join('')}`:'<div style="color:var(--green);text-align:center;padding:10px">✅ Koi pending issue nahi!</div>'}
+    ${resolved.length?`<h3 style="color:var(--green);font-size:.85em;margin:12px 0 8px">✅ Resolved</h3>${resolved.slice(0,10).map(i=>{
+      const t=D.tournaments.find(x=>x.id===i.tournamentId);
+      return`<div class="issue-card" style="opacity:.7"><div style="display:flex;justify-content:space-between"><span style="font-weight:700;font-size:.85em">${i.userName}</span><span class="issue-status ${i.status}">${i.status==='resolved'?'✅ Resolved':'❌ Rejected'}</span></div><div style="font-size:.78em;color:var(--dim);margin-top:3px">₹${i.amount} — ${t?.name||'?'} — ${i.team}</div></div>`;
+    }).join('')}`:''}
+  `;
+}
+
+function openAdminReply(issueId){
+  _replyIssueId=issueId;
+  const i=D.issues.find(x=>x.id===issueId);if(!i)return;
+  const t=D.tournaments.find(x=>x.id===i.tournamentId);
+  document.getElementById('admin-reply-content').innerHTML=`
+    <div class="card" style="margin-bottom:12px;padding:10px">
+      <div style="font-weight:700">${i.userName} — ₹${i.amount}</div>
+      <div style="font-size:.85em;color:var(--dim)">Team: ${i.team} • ${t?.name||'?'}</div>
+      <div style="font-size:.85em;color:var(--dim)">TXN: ${i.txn}</div>
+      ${i.desc?`<div style="margin-top:4px;font-size:.85em">"${i.desc}"</div>`:''}
+    </div>`;
+  document.getElementById('admin-reply-text').value=i.reply||'';
+  document.getElementById('admin-reply-status').value=i.status;
+  openModal('admin-reply');
+}
+
+function sendReply(){
+  const i=D.issues.find(x=>x.id===_replyIssueId);if(!i)return;
+  const reply=document.getElementById('admin-reply-text').value.trim();
+  const status=document.getElementById('admin-reply-status').value;
+  i.reply=reply;i.status=status;
+  addAct(`💬 Issue replied: "${i.userName}" → ${status}`);
+  save();closeModal('admin-reply');renderAll();toast('✅ Reply sent!');
+}
+
+function resolveIssue(id,adminName){
+  const i=D.issues.find(x=>x.id===id);if(!i)return;
+  i.status='resolved';i.reply=i.reply||`Payment verified by ${adminName}`;
+  addAct(`✅ Payment resolved: "${i.userName}" ₹${i.amount}`);
+  save();renderAll();toast('✅ Issue resolved!');
 }
 
 // ==================== UTILS ====================
