@@ -439,8 +439,8 @@ function showAuthTab(tab){
 }
 
 function doLogin(){
-  const email=document.getElementById('login-email').value.trim();
-  const pass=document.getElementById('login-pass').value;
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  const pass=document.getElementById('login-pass').value.trim();
   const errEl=document.getElementById('login-error');
   errEl.style.display='none';
   if(!email||!pass){
@@ -450,7 +450,7 @@ function doLogin(){
   }
 
   // Admin login
-  if(email==='admin@rcb.com'&&pass==='admin123'){
+  if(email==='admin@rcb.com'&&pass==='admin123'||email==='admin'&&pass==='admin123'){
     currentUser={id:'admin',name:'Admin',email:'admin@rcb.com',role:'admin'};
     localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
     enterApp();
