@@ -16,6 +16,11 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -414,24 +419,52 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div class="toast" id="toast"></div>
 
 <script>
+// ==================== FIREBASE CHECK ====================
+const FB_OK = typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY";
+
 // ==================== DATA ====================
 let D={
-  users:[],
-  tournaments:[],
-  teams:[],
-  matches:[],
-  activities:[],
-  issues:[],
-  payments:[],
+  users:[], tournaments:[], teams:[], matches:[], activities:[], issues:[], payments:[],
   settings:{name:'',upi:'',upiname:'',whatsapp:'',contact:''}
 };
-let currentUser=null;
+let currentUser = null;
 let _payTeamId=null,_payTournamentId=null,_bcMatchId=null,_joinTournamentId=null,_replyIssueId=null,_payScreenshot=null;
+let _fbLoading=false;
 
-function save(){localStorage.setItem('bgmi-v2',JSON.stringify(D));}
-function load(){const d=localStorage.getItem('bgmi-v2');if(d){try{D={...D,...JSON.parse(d)};}catch(e){}}}
+function save(){
+  localStorage.setItem('bgmi-v2',JSON.stringify(D));
+  if(FB_OK && !_fbLoading) fbSyncAll();
+}
+function load(){
+  const d=localStorage.getItem('bgmi-v2');
+  if(d){try{D={...D,...JSON.parse(d)};}catch(e){}}
+  if(FB_OK) fbLoadAll();
+}
 function gid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function addAct(m){D.activities.unshift({m,t:Date.now()});if(D.activities.length>25)D.activities=D.activities.slice(0,25);}
+
+// ==================== FIRESTORE SYNC ====================
+const _COLS = ['tournaments','teams','matches','payments','issues','users'];
+async function fbLoadAll(){
+  _fbLoading=true;
+  try{
+    const results = await Promise.all(_COLS.map(c => db.collection(c).get()));
+    _COLS.forEach((c,i) => { D[c] = results[i].docs.map(d => ({id:d.id,...d.data()})); });
+    const s = await db.collection('settings').doc('main').get();
+    if(s.exists) D.settings = s.data();
+    console.log('🔥 Firebase data loaded');
+    if(currentUser) renderAll();
+  }catch(e){ console.warn('Firebase load:',e.message); }
+  _fbLoading=false;
+}
+async function fbSyncAll(){
+  try{
+    const batch = db.batch();
+    _COLS.forEach(c => { D[c].forEach(d => batch.set(db.collection(c).doc(d.id), d, {merge:true})); });
+    batch.set(db.collection('settings').doc('main'), D.settings, {merge:true});
+    await batch.commit();
+  }catch(e){ console.warn('Firebase sync:',e.message); }
+}
 
 // ==================== AUTH ====================
 function showAuthTab(tab){
@@ -446,7 +479,7 @@ function showAuthTab(tab){
   }
 }
 
-function doLogin(){
+async function doLogin(){
   const emailEl=document.getElementById('login-email');
   const passEl=document.getElementById('login-pass');
   const loginInput=emailEl.value||'';
@@ -455,62 +488,109 @@ function doLogin(){
   const pass=passInput.trim();
   const errEl=document.getElementById('login-error');
   errEl.style.display='none';
-  if(!email||!pass){
-    errEl.textContent='❌ Email aur Password dono daalo!';
-    errEl.style.display='block';
-    return;
-  }
+  if(!email||!pass){ errEl.textContent='❌ Email aur Password dono daalo!'; errEl.style.display='block'; return; }
 
-  // Admin login
-  // Check admin - multiple ways
-  const isAdminEmail=(email==='ladakusena01'||email==='admin@rcb.com'||email==='admin');
-  const isAdminPass=(pass==='Mohit@kumar1234');
-
-  if(isAdminEmail&&isAdminPass){
-    currentUser={id:'admin',name:'Mohit Kumar',email:'ladakusena01',role:'admin'};
+  if(FB_OK){
+    try{
+      // Convert bare username to email if needed
+      const fbEmail = email.includes('@') ? email : email + '@bgmi.app';
+      const cred = await auth.signInWithEmailAndPassword(fbEmail, pass);
+      const uid = cred.user.uid;
+      // Check admin
+      const adminDoc = await db.collection('admins').doc(uid).get();
+      let userData = { id:uid, email:fbEmail, name:cred.user.displayName||fbEmail.split('@')[0], role:'player' };
+      if(adminDoc.exists){
+        userData.role = 'admin';
+        userData.name = adminDoc.data().name || 'Mohit Kumar';
+      }
+      // Also check users collection
+      const userSnap = await db.collection('users').doc(uid).get();
+      if(userSnap.exists) userData = {...userData, ...userSnap.data()};
+      currentUser = userData;
+      localStorage.setItem('bgmi-user', JSON.stringify(currentUser));
+      enterApp();
+    }catch(e){
+      const msg = e.code==='auth/user-not-found'?'❌ Account nahi mila! Pehle Sign Up karo.':
+                  e.code==='auth/wrong-password'||e.code==='auth/invalid-login-credentials'?'❌ Galat password!':
+                  e.code==='auth/invalid-email'?'❌ Sahi email daalo (example@email.com)':
+                  e.code==='auth/too-many-requests'?'❌ Bahut try kar liye! Thoda ruko.':'❌ Login failed: '+e.message;
+      errEl.textContent=msg; errEl.style.display='block';
+    }
+  } else {
+    // Fallback: localStorage
+    const isAdminEmail = (email==='ladakusena01'||email==='admin@rcb.com'||email==='admin');
+    const isAdminPass = (pass==='Mohit@kumar1234');
+    if(isAdminEmail&&isAdminPass){
+      currentUser={id:'admin',name:'Mohit Kumar',email:'ladakusena01',role:'admin'};
+      localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
+      enterApp(); return;
+    }
+    const user = D.users.find(u=>u.email.toLowerCase()===email&&u.pass===pass);
+    if(!user){
+      const emailExists=D.users.find(u=>u.email.toLowerCase()===email);
+      errEl.textContent=emailExists?'❌ Galat password hai!':'❌ Ye email registered nahi hai! Pehle Sign Up karo.';
+      errEl.style.display='block'; return;
+    }
+    currentUser=user;
     localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
     enterApp();
-    return;
   }
-
-  // Player login - case-insensitive email check
-  const user=D.users.find(u=>u.email.toLowerCase()===email&&u.pass===pass);
-  if(!user){
-    // Check if email exists (case-insensitive)
-    const emailExists=D.users.find(u=>u.email.toLowerCase()===email);
-    if(emailExists){
-      errEl.textContent='❌ Galat password hai! Sahi password daalo.';
-    } else {
-      errEl.textContent='❌ Ye email registered nahi hai! Pehle Sign Up karo.';
-    }
-    errEl.style.display='block';
-    return;
-  }
-  currentUser=user;
-  localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
-  enterApp();
 }
 
-function doSignup(){
+async function doSignup(){
   const name=document.getElementById('signup-name').value.trim();
-  const email=document.getElementById('signup-email').value.trim().toLowerCase();
+  const emailRaw=document.getElementById('signup-email').value.trim().toLowerCase();
   const phone=document.getElementById('signup-phone').value.trim();
   const bgminame=document.getElementById('signup-bgminame').value.trim();
   const pass=document.getElementById('signup-pass').value;
-  if(!name||!email||!pass){toast('❌ Name, Email aur Password zaruri hai!');return;}
+  if(!name||!emailRaw||!pass){toast('❌ Name, Email aur Password zaruri hai!');return;}
 
-  if(D.users.find(u=>u.email.toLowerCase()===email)){toast('❌ Email already registered!');return;}
-
-  const user={id:gid(),name,email,phone,bgminame,pass,role:'player',created:Date.now()};
-  D.users.push(user);
-  addAct(`👤 "${name}" ne sign up kiya!`);
-  save();
-  currentUser=user;
-  localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
-  enterApp();
+  if(FB_OK){
+    try{
+      const cred = await auth.createUserWithEmailAndPassword(emailRaw, pass);
+      const uid = cred.user.uid;
+      // Save user profile to Firestore
+      const userData = { id:uid, name, email:emailRaw, phone, bgminame, role:'player', created:Date.now() };
+      await db.collection('users').doc(uid).set(userData);
+      // First user becomes admin
+      const userCount = (await db.collection('users').get()).size;
+      if(userCount === 1){
+        userData.role = 'admin';
+        await db.collection('users').doc(uid).update({role:'admin'});
+        await db.collection('admins').doc(uid).set({name,email:emailRaw});
+        toast('👑 First user! You are now the ADMIN.');
+      }
+      // Save to local users array too
+      const idx = D.users.findIndex(u=>u.id===uid);
+      if(idx>=0) D.users[idx]=userData; else D.users.push(userData);
+      save();
+      currentUser=userData;
+      localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
+      addAct(`👤 \"${name}\" ne Firebase se sign up kiya!`);
+      enterApp();
+    }catch(e){
+      const msg = e.code==='auth/email-already-in-use'?'❌ Email already registered! Login karo.':
+                  e.code==='auth/weak-password'?'❌ Password kam se kam 6 characters ka daalo.':
+                  e.code==='auth/invalid-email'?'❌ Sahi email daalo.':'❌ Signup failed: '+e.message;
+      toast(msg);
+    }
+  } else {
+    // Fallback: localStorage
+    if(D.users.find(u=>u.email.toLowerCase()===emailRaw)){toast('❌ Email already registered!');return;}
+    const user={id:gid(),name,email:emailRaw,phone,bgminame,pass,role:'player',created:Date.now()};
+    D.users.push(user);
+    addAct(`👤 \"${name}\" ne sign up kiya!`);
+    save();
+    currentUser=user;
+    localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
+    enterApp();
+  }
 }
 
-function doLogout(){
+async function doLogout(){
+  if(FB_OK){
+    try{ await auth.signOut(); }catch(e){}
+  }
   currentUser=null;
   localStorage.removeItem('bgmi-user');
   document.getElementById('main-app').style.display='none';
@@ -1117,8 +1197,32 @@ function tAgo(ts){const d=Date.now()-ts;if(d<60000)return'abhi';if(d<3600000)ret
 
 // ==================== INIT ====================
 load();
-const savedUser=localStorage.getItem('bgmi-user');
-if(savedUser){try{currentUser=JSON.parse(savedUser);enterApp();}catch(e){}}
+// Firebase auth state listener - handles session restore
+function initAuthState(){
+  if(typeof auth !== 'undefined' && FB_OK){
+    auth.onAuthStateChanged(function(fbUser){
+      if(fbUser){
+        var saved=localStorage.getItem('bgmi-user');
+        if(saved){ try{ currentUser=JSON.parse(saved); enterApp(); }catch(e){} return; }
+        // Restore from Firestore
+        db.collection('users').doc(fbUser.uid).get().then(function(doc){
+          var base = {id:fbUser.uid, email:fbUser.email, name:fbUser.email.split('@')[0], role:'player'};
+          if(doc.exists) base = {...base, ...doc.data()};
+          db.collection('admins').doc(fbUser.uid).get().then(function(adoc){
+            if(adoc.exists) base.role='admin';
+            currentUser=base;
+            localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
+            enterApp();
+          }).catch(function(){ currentUser=base; localStorage.setItem('bgmi-user',JSON.stringify(currentUser)); enterApp(); });
+        }).catch(function(){ /* Firestore not ready */ });
+      }
+    });
+  }
+}
+initAuthState();
+// Fallback: localStorage check (for non-Firebase mode or immediate session)
+var savedUser=localStorage.getItem('bgmi-user');
+if(savedUser && !currentUser){ try{currentUser=JSON.parse(savedUser);enterApp();}catch(e){} }
 
 // Eye button - touch compatible (sabhi browsers/WebView ke liye)
 function bindEye(eyeId,inputId){
@@ -1146,6 +1250,7 @@ bindEye('eye-signup','signup-pass');
     signupBtn.addEventListener('touchend',sh);
   }
 })();
+
 </script>
 </body>
 </html>
