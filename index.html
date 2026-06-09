@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="v10">
+<meta name="version" content="v11">
 <meta name="theme-color" content="#ff4655">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -203,9 +203,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- LOGIN FORM -->
     <div class="auth-form active" id="login-form">
       <div class="fg"><label>Email</label><input type="text" id="login-email" placeholder="Email ya username"></div>
-      <div class="fg"><label>Password</label><div style="position:relative"><input type="password" id="login-pass" placeholder="Password" style="padding-right:42px"><span id="eye-login" onclick="togglePass('login-pass')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1.3em;-webkit-user-select:none;user-select:none">👁️</span></div></div>
+      <div class="fg"><label>Password</label><div style="position:relative"><input type="password" id="login-pass" placeholder="Password" style="padding-right:42px"><span id="eye-login" onclick="togglePass('login-pass')" ontouchend="togglePass('login-pass')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1.3em;-webkit-user-select:none;user-select:none;touch-action:manipulation">👁️</span></div></div>
       <div id="login-error" style="display:none;background:rgba(255,70,85,.15);border:1px solid var(--acc);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:.85em;color:var(--acc);text-align:center"></div>
-      <button class="btn btn-p btn-full" onclick="doLogin()">🔑 Login</button>
+      <button class="btn btn-p btn-full" onclick="doLogin()" ontouchend="doLogin()">🔑 Login</button>
     </div>
 
     <!-- SIGNUP FORM -->
@@ -214,8 +214,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Email</label><input type="email" id="signup-email" placeholder="your@email.com"></div>
       <div class="fg"><label>Phone (WhatsApp)</label><input type="tel" id="signup-phone" placeholder="919876543210"></div>
       <div class="fg"><label>BGMI Name</label><input type="text" id="signup-bgminame" placeholder="In-game name"></div>
-      <div class="fg"><label>Password</label><div style="position:relative"><input type="password" id="signup-pass" placeholder="Password" style="padding-right:42px"><span id="eye-signup" onclick="togglePass('signup-pass')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1.3em;-webkit-user-select:none;user-select:none">👁️</span></div></div>
-      <button class="btn btn-p btn-full" onclick="doSignup()">📝 Sign Up</button>
+      <div class="fg"><label>Password</label><div style="position:relative"><input type="password" id="signup-pass" placeholder="Password" style="padding-right:42px"><span id="eye-signup" onclick="togglePass('signup-pass')" ontouchend="togglePass('signup-pass')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1.3em;-webkit-user-select:none;user-select:none;touch-action:manipulation">👁️</span></div></div>
+      <button class="btn btn-p btn-full" onclick="doSignup()" ontouchend="doSignup()">📝 Sign Up</button>
     </div>
   </div>
 </div>
@@ -461,7 +461,7 @@ const FB_OK = typeof firebaseConfig !== 'undefined' && firebaseConfig && firebas
 
 // ==================== DATA ====================
 let D={
-  users:[], tournaments:[], teams:[], matches:[], activities:[], issues:[], payments:[],
+  users:[], tournaments:[], teams:[], matches:[], activities:[], issues:[], payments:[], broadcasts:[],
   settings:{name:'',upi:'',upiname:'',whatsapp:'',contact:''}
 };
 let currentUser = null;
@@ -507,16 +507,32 @@ async function fbSyncAll(){
 function showAuthTab(tab){
   document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
+  // Clear form fields and errors
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('signup-name').value='';
+  document.getElementById('signup-email').value='';
+  document.getElementById('signup-phone').value='';
+  document.getElementById('signup-bgminame').value='';
+  document.getElementById('signup-pass').value='';
+  const errEl=document.getElementById('login-error');
+  if(errEl)errEl.style.display='none';
   if(tab==='login'){
     document.querySelectorAll('.auth-tab')[0].classList.add('active');
     document.getElementById('login-form').classList.add('active');
+    setTimeout(()=>{try{document.getElementById('login-email').focus();}catch(e){}},200);
   } else {
     document.querySelectorAll('.auth-tab')[1].classList.add('active');
     document.getElementById('signup-form').classList.add('active');
+    setTimeout(()=>{try{document.getElementById('signup-name').focus();}catch(e){}},200);
   }
 }
 
 async function doLogin(){
+  if(!window._loginGuard)window._loginGuard=0;
+  const now=Date.now();
+  if(now-window._loginGuard<500)return;
+  window._loginGuard=now;
   const emailEl=document.getElementById('login-email');
   const passEl=document.getElementById('login-pass');
   const loginInput=emailEl.value||'';
@@ -575,6 +591,10 @@ async function doLogin(){
 }
 
 async function doSignup(){
+  if(!window._signupGuard)window._signupGuard=0;
+  const now=Date.now();
+  if(now-window._signupGuard<500)return;
+  window._signupGuard=now;
   const name=document.getElementById('signup-name').value.trim();
   const emailRaw=document.getElementById('signup-email').value.trim().toLowerCase();
   const phone=document.getElementById('signup-phone').value.trim();
@@ -707,6 +727,10 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function togglePass(id){
   const inp=document.getElementById(id);
   if(!inp)return;
+  if(!window._toggleGuard)window._toggleGuard={};
+  const now=Date.now();
+  if(window._toggleGuard[id]&&now-window._toggleGuard[id]<300)return;
+  window._toggleGuard[id]=now;
   const isPass=inp.type==='password';
   inp.type=isPass?'text':'password';
   const eye=id==='login-pass'?'eye-login':'eye-signup';
@@ -1475,32 +1499,9 @@ function checkBroadcastNotifications(){
 var origEnter=enterApp;
 enterApp=function(){origEnter();checkBroadcastNotifications();};
 
-// Eye button - touch compatible (sabhi browsers/WebView ke liye)
-function bindEye(eyeId,inputId){
-  const el=document.getElementById(eyeId);
-  if(!el)return;
-  const handler=function(e){e.preventDefault();e.stopPropagation();togglePass(inputId);return false;};
-  el.addEventListener('click',handler);
-  el.addEventListener('touchend',handler);
-}
-bindEye('eye-login','login-pass');
-bindEye('eye-signup','signup-pass');
-
-// Login button - touch compatible (DOMContentLoaded issue fix: direct binding)
-(function(){
-  var loginBtn=document.querySelector('#login-form .btn-full');
-  if(loginBtn){
-    var h=function(e){e.preventDefault();e.stopPropagation();doLogin();return false;};
-    loginBtn.addEventListener('click',h);
-    loginBtn.addEventListener('touchend',h);
-  }
-  var signupBtn=document.querySelector('#signup-form .btn-full');
-  if(signupBtn){
-    var sh=function(e){e.preventDefault();e.stopPropagation();doSignup();return false;};
-    signupBtn.addEventListener('click',sh);
-    signupBtn.addEventListener('touchend',sh);
-  }
-})();
+// No duplicate bindEye needed - onclick in HTML handles it
+// No duplicate login/signup listener needed - onclick in HTML handles it
+// Touch support via ontouchend on buttons (see HTML)
 
 </script>
 </body>
