@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="v16">
+<meta name="version" content="v17">
 <meta name="theme-color" content="#ff4655">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -209,7 +209,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Password</label>
         <div class="pass-wrap">
           <input type="password" id="loginPass" placeholder="Password">
-          <button type="button" id="loginEye" class="eye-btn" onclick="togglePass('loginPass',this)">👁️</button>
+          <button type="button" id="loginEye" class="eye-btn" onclick="togglePass()">👁️</button>
         </div>
       </div>
       <button type="button" class="btn btn-p btn-full" onclick="doLogin()">🔑 Login</button>
@@ -237,7 +237,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Password</label>
         <div class="pass-wrap">
           <input type="password" id="signupPass" placeholder="Password (min 6 chars)">
-          <button type="button" id="signupEye" class="eye-btn" onclick="togglePass('signupPass',this)">👁️</button>
+          <button type="button" id="signupEye" class="eye-btn" onclick="togglePassSignup()">👁️</button>
         </div>
       </div>
       <button type="button" class="btn btn-p btn-full" onclick="doSignup()">📝 Sign Up</button>
@@ -543,15 +543,20 @@ function showLogin(){
   document.getElementById('signupErr').style.display='none';
 }
 
-// ===== EYE BUTTON — SIMPLEST POSSIBLE =====
-// Sirf onclick attribute se call hota hai. No DOMContentLoaded, no addEventListener, no ontouchend.
-var _eyeGuard={};
-function togglePass(inputId,btn){
-  var now=Date.now();
-  if(_eyeGuard[inputId]&&now-_eyeGuard[inputId]<500)return;
-  _eyeGuard[inputId]=now;
-  var inp=document.getElementById(inputId);
-  if(!inp)return;
+// ===== EYE BUTTON — EXACTLY like test page =====
+function togglePass(){
+  var inp=document.getElementById('loginPass');
+  var btn=document.getElementById('loginEye');
+  if(!inp||!btn)return;
+  var pw=inp.type==='password';
+  inp.type=pw?'text':'password';
+  btn.textContent=pw?'🙈':'👁️';
+  btn.innerHTML=pw?'🙈':'👁️';
+}
+function togglePassSignup(){
+  var inp=document.getElementById('signupPass');
+  var btn=document.getElementById('signupEye');
+  if(!inp||!btn)return;
   var pw=inp.type==='password';
   inp.type=pw?'text':'password';
   btn.textContent=pw?'🙈':'👁️';
