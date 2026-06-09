@@ -473,11 +473,11 @@ function doLogin(){
     return;
   }
 
-  // Player login
-  const user=D.users.find(u=>u.email===email&&u.pass===pass);
+  // Player login - case-insensitive email check
+  const user=D.users.find(u=>u.email.toLowerCase()===email&&u.pass===pass);
   if(!user){
-    // Check if email exists
-    const emailExists=D.users.find(u=>u.email===email);
+    // Check if email exists (case-insensitive)
+    const emailExists=D.users.find(u=>u.email.toLowerCase()===email);
     if(emailExists){
       errEl.textContent='❌ Galat password hai! Sahi password daalo.';
     } else {
@@ -493,15 +493,15 @@ function doLogin(){
 
 function doSignup(){
   const name=document.getElementById('signup-name').value.trim();
-  const email=document.getElementById('signup-email').value.trim();
+  const email=document.getElementById('signup-email').value.trim().toLowerCase();
   const phone=document.getElementById('signup-phone').value.trim();
   const bgminame=document.getElementById('signup-bgminame').value.trim();
   const pass=document.getElementById('signup-pass').value;
   if(!name||!email||!pass){toast('❌ Name, Email aur Password zaruri hai!');return;}
 
-  if(D.users.find(u=>u.email===email)){toast('❌ Email already registered!');return;}
+  if(D.users.find(u=>u.email.toLowerCase()===email)){toast('❌ Email already registered!');return;}
 
-  const user={id:gid(),name,email,phone:bgminame,bgminame,pass,role:'player',created:Date.now()};
+  const user={id:gid(),name,email,phone,bgminame,pass,role:'player',created:Date.now()};
   D.users.push(user);
   addAct(`👤 "${name}" ne sign up kiya!`);
   save();
