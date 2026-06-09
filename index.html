@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="v9">
+<meta name="version" content="v10">
 <meta name="theme-color" content="#ff4655">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -167,6 +167,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btm-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--dim);font-family:'Rajdhani',sans-serif;font-size:.65em;font-weight:700;cursor:pointer;padding:4px 8px;}
 .btm-btn.active{color:var(--acc);}
 .btm-btn span:first-child{font-size:1.5em;}
+/* ICON CARDS FOR DASHBOARD */
+.icon-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.icard{background:linear-gradient(135deg,var(--card2),var(--card));border:1px solid var(--brd);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+.icard:active{transform:scale(.96);}
+.icard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--acc));opacity:.6;}
+.icard-icon{font-size:2em;margin-bottom:4px;}
+.icard-count{font-family:'Orbitron',sans-serif;font-size:1.8em;font-weight:900;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.icard-label{font-size:.7em;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:2px;font-weight:700;}
+.icard-live{border-color:var(--green);box-shadow:0 0 15px rgba(0,255,136,.15);}
+.icard-live::before{background:linear-gradient(90deg,var(--green),var(--blue));}
+.icard-live .icard-icon{animation:icard-pulse 1.5s infinite;}
+@keyframes icard-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @media(min-width:601px){.btm-nav{display:none;}.page{padding-bottom:20px;}}
 
 /* PLAYER DASHBOARD SPECIAL */
@@ -366,6 +378,31 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <button class="btn btn-s" onclick="copyAllRoomIds()">📋 Copy All</button>
       <button class="btn btn-s" onclick="closeModal('broadcast')">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- Tournament Level Broadcast (Admin) -->
+<div class="modal-bg" id="modal-tournament-broadcast">
+  <div class="modal">
+    <h2 id="tb-name">📢 Broadcast Room ID</h2>
+    <div style="margin:12px 0">
+      <div id="tb-teams" style="margin-bottom:10px;font-size:.85em"></div>
+      <div class="fg"><label>🔑 Room ID</label><input type="text" id="tb-rid" placeholder="Room ID daalo" style="font-family:Orbitron;letter-spacing:2px;font-size:1.2em;text-align:center"></div>
+      <div class="fg"><label>🔒 Password</label><input type="text" id="tb-rpw" placeholder="Room Password daalo" style="font-family:Orbitron;letter-spacing:2px;font-size:1.2em;text-align:center"></div>
+    </div>
+    <div class="btn-grp">
+      <button class="btn btn-g" onclick="submitTournamentBroadcast()">📢 Broadcast Now</button>
+      <button class="btn btn-w" onclick="document.getElementById('tb-rid').value='';document.getElementById('tb-rpw').value=''">🔄 Clear</button>
+      <button class="btn btn-s" onclick="closeModal('tournament-broadcast')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Players (Admin) -->
+<div class="modal-bg" id="modal-view-players">
+  <div class="modal" style="max-width:500px">
+    <h2>👥 Joined Players</h2>
+    <div id="vp-content"></div>
   </div>
 </div>
 
@@ -719,58 +756,94 @@ function regTeam(tid,tmid){const t=D.tournaments.find(x=>x.id===tid);if(!t)retur
 
 // ==================== TOURNAMENT (Player) ====================
 let _joinTourId=null;
+let _joinTeamId=null;
 function openJoinTournament(tid){
-  _joinTourId=tid;
+  _joinTourId=tid;_joinTeamId=null;
   const t=D.tournaments.find(x=>x.id===tid);
   if(!t)return;
   const myTeams=D.teams.filter(tm=>tm.userId===currentUser.id);
-  const isRegistered=t.teams.some(tid=>myTeams.find(m=>m.id===tid));
-  const isPaid=(t.paid||[]).some(pid=>myTeams.find(m=>m.id===pid));
-  const feeText=t.fee>0?`Entry Fee: ₹${t.fee}`:'FREE Entry';
+  const alreadyJoined=t.teams||[];
+  const feeText=t.fee>0?`💰 Entry Fee: ₹${t.fee}`:'🎁 FREE Entry';
 
+  let teamOptions='';
+  if(myTeams.length){
+    teamOptions=myTeams.map(tm=>{
+      const isJoined=alreadyJoined.includes(tm.id);
+      return`<label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg);border:1px solid ${isJoined?'var(--green)':'var(--brd)'};border-radius:8px;margin-bottom:6px;cursor:pointer;${isJoined?'opacity:.6':''}">
+        <input type="radio" name="join-team" value="${tm.id}" ${isJoined?'disabled':''} style="accent-color:var(--acc);transform:scale(1.2)">
+        <span style="flex:1"><span class="tag" style="background:rgba(0,212,255,.15);color:var(--blue)">${tm.tag}</span> ${tm.name}</span>
+        ${isJoined?'<span class="badge b-paid">✅ Joined</span>':''}
+      </label>`;
+    }).join('');
+  } else {
+    teamOptions=`<div style="color:var(--dim);text-align:center;padding:10px">❌ Pehle apni team banao! <br><button class="btn btn-s btn-sm" onclick="closeModal('join-tournament');openModal('create-team')" style="margin-top:6px">👥 Add Team</button></div>`;
+  }
+
+  const slotsLeft=t.max-(alreadyJoined.length||0);
   let h=`
     <div style="text-align:center;margin-bottom:12px">
       <h3 style="color:var(--blue)">${t.name}</h3>
       <span class="badge b-${t.status}">${t.status}</span>
     </div>
     <div class="t-meta" style="justify-content:center">
-      <span>🎮 ${t.mode}</span><span>🗺️ ${t.map}</span><span>👥 ${t.teams.length}/${t.max}</span>
+      <span>🎮 ${t.mode}</span><span>🗺️ ${t.map}</span><span>👥 ${alreadyJoined.length}/${t.max}</span>
+      ${slotsLeft>0?`<span style="color:var(--green);font-weight:700">${slotsLeft} slots</span>`:'<span style="color:var(--acc)">FULL</span>'}
     </div>
-    <div style="text-align:center;margin:10px 0;font-size:1.1em;color:${t.fee>0?'var(--acc)':'var(--green)'}; font-weight:700">${feeText}</div>
+    <div style="text-align:center;margin:10px 0;font-size:1.1em;color:${t.fee>0?'var(--acc)':'var(--green)'};font-weight:700">${feeText}</div>
     ${t.prize?`<div style="text-align:center;color:var(--gold);font-weight:700">🏆 Prize: ₹${t.prize}</div>`:''}
     <div style="margin-top:12px">
-      <div style="font-weight:700;color:var(--blue);margin-bottom:6px">Teri Teams:</div>
-      ${myTeams.length?myTeams.map(tm=>{
-        const reg=t.teams.includes(tm.id);
-        const paid=(t.paid||[]).includes(tm.id);
-        return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--bg);border-radius:8px;margin-bottom:4px">
-          <span><span class="tag" style="background:rgba(0,212,255,.15);color:var(--blue)">${tm.tag}</span> ${tm.name}</span>
-          ${reg?`<span class="badge ${paid?'b-paid':'b-unpaid'}">${paid?'✅ Paid':'💰 Pay'}</span>`:'<span style="color:var(--dim);font-size:.8em">Not joined</span>'}
-        </div>`;
-      }).join(''):'<div style="color:var(--dim);font-size:.85em">Pehle apni team banao!</div>'}
-    </div>
-  `;
+      <div style="font-weight:700;color:var(--blue);margin-bottom:8px;font-size:.9em">🎯 Apni Team Select Karo:</div>
+      ${teamOptions}
+    </div>`;
   document.getElementById('join-content').innerHTML=h;
+  document.getElementById('join-btn').style.display=slotsLeft>0&&myTeams.length?'inline-flex':'none';
+  if(slotsLeft>0&&myTeams.length){
+    document.getElementById('join-btn').onclick=function(){joinTournament(t);};
+  }
   openModal('join-tournament');
 }
 
-function joinTournament(){
-  const t=D.tournaments.find(x=>x.id===_joinTourId);
-  if(!t)return;
-  const myTeams=D.teams.filter(tm=>tm.userId===currentUser.id);
-  let joined=false;
-  myTeams.forEach(tm=>{
-    if(!t.teams.includes(tm.id)){
-      t.teams.push(tm.id);
-      joined=true;
-    }
-  });
-  if(joined){
-    addAct(`🎮 "${currentUser.name}" joined "${t.name}"`);
-    save();closeModal('join-tournament');renderAll();toast('✅ Tournament joined!');
-  } else {
-    toast('⚠️ Already joined ya koi team nahi!');
+function joinTournament(t){
+  const selected=document.querySelector('input[name="join-team"]:checked');
+  if(!selected){toast('❌ Pehle team select karo!');return;}
+  const teamId=selected.value;
+  const tm=D.teams.find(x=>x.id===teamId);
+  if(!tm)return;
+  if(t.teams.includes(teamId)){toast('⚠️ Ye team already join hai!');closeModal('join-tournament');return;}
+  if(t.teams.length>=t.max){toast('❌ Tournament full!');closeModal('join-tournament');return;}
+  
+  // Free entry → join immediately
+  if(!t.fee||t.fee===0){
+    if(!t.paid)t.paid=[];
+    t.teams.push(teamId);
+    t.paid.push(teamId);
+    save();
+    closeModal('join-tournament');
+    renderAll();
+    showJoinSuccess(t,tm);
+    return;
   }
+  
+  // Fee hai → payment screen dikhao
+  _joinTeamId=teamId;
+  closeModal('join-tournament');
+  setTimeout(()=>payTournamentFee(t.id,teamId),300);
+}
+
+function showJoinSuccess(t,tm){
+  const el=document.getElementById('page-dashboard');
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center';
+  overlay.innerHTML=`
+    <div style="font-size:4em;margin-bottom:16px">✅</div>
+    <h2 style="color:var(--green);font-family:Orbitron;font-size:1.3em;margin-bottom:8px">🎉 SUCCESSFULLY JOINED!</h2>
+    <div style="color:var(--blue);margin-bottom:4px;font-size:.9em">${t.name}</div>
+    <div style="margin:12px 0"><span class="tag" style="background:rgba(0,212,255,.15);color:var(--blue);font-size:1.1em">${tm.tag}</span></div>
+    <div style="color:var(--dim);font-size:.85em;margin-bottom:20px">Apni team ke saath taiyaar ho jao! Room ID jald aayegi 🔥</div>
+    <button class="btn btn-p" onclick="document.body.removeChild(this.parentElement)" style="font-size:1em;padding:14px 40px">🎮 My Matches</button>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('button').addEventListener('click',function(){document.body.removeChild(overlay);go('my-matches');});
 }
 
 function payTournamentFee(tid,tmid){
@@ -820,9 +893,27 @@ function submitPaymentProof(){
   if(D.payments.find(p=>p.utr===utr)){toast('❌ Ye UTR pehle use ho chuka hai!');return;}
   const payment={id:gid(),tournamentId:_payTournamentId,teamId:_payTeamId,teamName:tm?.name||'',teamTag:tm?.tag||'',userId:currentUser.id,userName:currentUser.name,amount:t.fee,utr,screenshot:_payScreenshot||null,status:'pending',created:Date.now()};
   D.payments.push(payment);
+  // Abhi team join karo with pending payment status
+  if(!t.teams.includes(_payTeamId)){
+    t.teams.push(_payTeamId);
+    if(!t.paid)t.paid=[];
+    // t.paid mein nahi dalenge - payment pending hai
+  }
   addAct(`💳 Payment proof submitted by "${currentUser.name}" — UTR: ${utr}`);
-  save();closeModal('payment');renderAll();toast('✅ Payment proof submit ho gaya! Admin jaldi verify karega. 💪');
   _payScreenshot=null;
+  save();closeModal('payment');renderAll();
+  // Show payment submitted success overlay
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center';
+  overlay.innerHTML=`
+    <div style="font-size:4em;margin-bottom:16px">⏳</div>
+    <h2 style="color:var(--gold);font-family:Orbitron;font-size:1.1em;margin-bottom:8px">PAYMENT SUBMITTED! ✅</h2>
+    <div style="color:var(--green);margin-bottom:4px;font-size:.9em">₹${t.fee} — ${t.name}</div>
+    <div style="color:var(--dim);font-size:.85em;margin-bottom:16px">Admin jaldi verify karega. Notification aayegi! 📲</div>
+    <button class="btn btn-g" onclick="document.body.removeChild(this.parentElement)" style="font-size:.9em">👍 Theek Hai</button>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('button').addEventListener('click',function(){document.body.removeChild(overlay);});
 }
 
 function autoVerifyPayment(paymentId){
@@ -929,6 +1020,109 @@ function copyAllRoomIds(){
   navigator.clipboard.writeText(text).then(()=>toast('📋 Copied!')).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 Copied!');});
 }
 
+// ==================== TOURNAMENT BROADCAST (Admin) ====================
+let _bcTournamentId=null;
+function openTournamentBroadcast(tid){
+  _bcTournamentId=tid;
+  const t=D.tournaments.find(x=>x.id===tid);
+  if(!t)return;
+  const regTeams=t.teams.map(tid=>D.teams.find(x=>x.id===tid)).filter(Boolean);
+  const existing=(D.broadcasts||[]).filter(b=>b.tournamentId===tid);
+  const lastBc=existing[existing.length-1];
+  document.getElementById('tb-name').textContent='📢 '+t.name;
+  document.getElementById('tb-rid').value=lastBc?.roomId||'';
+  document.getElementById('tb-rpw').value=lastBc?.password||'';
+  document.getElementById('tb-teams').innerHTML=regTeams.length?
+    regTeams.map(tm=>`<span class="tag" style="background:rgba(0,212,255,.15);color:var(--blue);margin:2px">${tm.tag} ${t.paid?.includes(tm.id)?'✅':''}</span>`).join('')+' ('+regTeams.length+' teams)':
+    '<span style="color:var(--dim);font-size:.85em">Koi team join nahi hui</span>';
+  openModal('tournament-broadcast');
+}
+function submitTournamentBroadcast(){
+  const tid=_bcTournamentId;
+  const t=D.tournaments.find(x=>x.id===tid);
+  const rid=document.getElementById('tb-rid').value.trim();
+  const rpw=document.getElementById('tb-rpw').value.trim();
+  if(!rid||!rpw){toast('❌ Room ID aur Password dono daalo!');return;}
+  if(!D.broadcasts)D.broadcasts=[];
+  D.broadcasts.push({
+    id:gid(),tournamentId:tid,tournamentName:t.name,
+    roomId:rid,password:rpw,
+    created:Date.now(),
+    teams:(t.teams||[]).slice()
+  });
+  // Also update all matches of this tournament with the room id
+  D.matches.filter(m=>m.tid===tid).forEach(m=>{
+    if(!m.rid){m.rid=rid;m.rpw=rpw;}
+  });
+  addAct(`📢 Room ID Broadcast: "${t.name}" — ID: ${rid}`);
+  save();closeModal('tournament-broadcast');renderAll();
+  // Show success with WhatsApp option
+  toast('✅ Room ID Broadcast ho gaya!');
+}
+
+// ==================== VIEW PLAYERS (Admin) ====================
+let _vpTournamentId=null;
+function openViewPlayers(tid){
+  _vpTournamentId=tid;
+  const t=D.tournaments.find(x=>x.id===tid);
+  if(!t)return;
+  const regTeams=t.teams.map(tid=>D.teams.find(x=>x.id===tid)).filter(Boolean);
+  const paidTeams=t.paid||[];
+  let h=`<div style="margin-bottom:10px;text-align:center">
+    <h3 style="color:var(--blue)">${t.name}</h3>
+    <span class="badge b-${t.status}">${t.status}</span>
+    <div style="font-size:.85em;margin-top:4px;color:var(--dim)">Total: ${regTeams.length}/${t.max} teams</div>
+  </div>`;
+  if(regTeams.length){
+    h+=regTeams.map(tm=>{
+      const isPaid=paidTeams.includes(tm.id);
+      const user=D.users.find(u=>u.id===tm.userId);
+      const bgmiName=tm.cap||'—';
+      const bgmiId=tm.phone||'—';
+      return`<div class="card" style="padding:10px;margin-bottom:6px;border-left:3px solid ${isPaid?'var(--green)':'var(--acc)'}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><span class="tag" style="background:rgba(0,212,255,.15);color:var(--blue)">${tm.tag}</span> <span style="font-weight:700">${tm.name}</span></div>
+          <span class="badge ${isPaid?'b-paid':'b-unpaid'}">${isPaid?'✅ Paid':'⏳ Pending'}</span>
+        </div>
+        <div style="font-size:.8em;color:var(--dim);margin-top:4px">
+          <span>📛 ${bgmiName}</span> • <span>🆔 ${bgmiId}</span>
+          ${user?.email?`• <span>📧 ${user.email}</span>`:''}
+        </div>
+        <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+          ${tm.players?.map((p,i)=>`<span style="padding:2px 6px;background:var(--bg);border-radius:4px;font-size:.75em">${i===0?'👑':'•'} ${p}</span>`).join('')||''}
+        </div>
+        <div class="btn-grp" style="margin-top:6px">
+          ${tm.phone?`<button class="btn btn-sm btn-w" onclick="window.open('https://wa.me/${tm.phone.replace(/[^0-9]/g,'')}','_blank')">📱 WhatsApp</button>`:''}
+          <button class="btn btn-sm btn-d" onclick="removeTeamFromTournament('${t.id}','${tm.id}')">❌ Remove</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    h+='<div class="empty"><div class="empty-i">👥</div>Koi team join nahi hui</div>';
+  }
+  h+=`<div class="btn-grp" style="margin-top:10px">
+    <button class="btn btn-w btn-sm" onclick="broadcastTeamsToWhatsApp('${t.id}')">📱 WhatsApp Share All</button>
+    <button class="btn btn-s btn-sm" onclick="closeModal('view-players')">Close</button>
+  </div>`;
+  document.getElementById('vp-content').innerHTML=h;
+  openModal('view-players');
+}
+function removeTeamFromTournament(tid,tmid){
+  if(!confirm('Remove this team?'))return;
+  const t=D.tournaments.find(x=>x.id===tid);
+  if(!t)return;
+  t.teams=t.teams.filter(x=>x!==tmid);
+  if(t.paid)t.paid=t.paid.filter(x=>x!==tmid);
+  save();closeModal('view-players');renderAll();toast('❌ Team removed!');
+}
+function broadcastTeamsToWhatsApp(tid){
+  const t=D.tournaments.find(x=>x.id===tid);
+  if(!t)return;
+  const regTeams=t.teams.map(tid=>D.teams.find(x=>x.id===tid)).filter(Boolean);
+  const msg=`🏆 *${t.name}* — Joined Teams\n\n${regTeams.map((tm,i)=>`${i+1}. *${tm.tag}* ${tm.name}\n   IGL: ${tm.cap||'—'} • ${tm.phone||'—'}`).join('\n')}\n\nTotal: ${regTeams.length} teams`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
 // ==================== POINTS ====================
 function calcPts(pos,kills){const pp={1:50,2:35,3:28,4:22,5:16,6:12,7:9,8:7,9:5,10:4,11:3,12:2,13:1,14:1};return(pp[pos]||0)+(kills*2);}
 
@@ -976,7 +1170,11 @@ function renderTournamentsAdmin(){
     <div class="t-meta"><span>🎮 ${t.mode}</span><span>🗺️ ${t.map}</span><span>👥 ${t.teams.length}/${t.max}</span>${t.fee?`<span>💰 ₹${t.fee}</span>`:''}${t.prize?`<span>🏆 ₹${t.prize}</span>`:''}${t.date?`<span>📅 ${fmtDate(t.date)}</span>`:''}</div>
     ${regTeams.length?`<div style="margin:6px 0;display:flex;flex-wrap:wrap;gap:3px">${regTeams.map(tm=>{const isPaid=paidTeams.includes(tm.id);return`<span class="tag" style="background:${isPaid?'rgba(0,255,136,.15)':'rgba(255,70,85,.15)'};color:${isPaid?'var(--green)':'var(--acc)'}">${tm.tag} ${isPaid?'✅':''}</span>`;}).join('')}</div>`:''}
     ${t.status!=='done'?`<div style="margin:6px 0;display:flex;flex-wrap:wrap;gap:4px">${freeTeams.slice(0,5).map(tm=>`<button class="btn btn-sm btn-s" onclick="regTeam('${t.id}','${tm.id}')">${tm.tag}</button>`).join('')}${freeTeams.length>5?`<span style="color:var(--dim);font-size:.8em;line-height:2">+${freeTeams.length-5}</span>`:''}</div>`:''}
-    <div class="btn-grp"><button class="btn btn-sm btn-d" onclick="delTournament('${t.id}')">🗑️</button></div></div>`;
+    <div class="btn-grp">
+      ${t.status!=='done'?`<button class="btn btn-sm btn-w" onclick="openTournamentBroadcast('${t.id}')">📢 Room ID</button>`:''}
+      <button class="btn btn-sm btn-s" onclick="openViewPlayers('${t.id}')">👥 Players (${t.teams.length})</button>
+      <button class="btn btn-sm btn-d" onclick="delTournament('${t.id}')">🗑️</button>
+    </div></div>`;
   }).join('');
 }
 
@@ -999,17 +1197,34 @@ function renderDashPlayer(){
   const myTourIds=D.tournaments.filter(t=>t.teams.some(tid=>myTeams.find(m=>m.id===tid))).map(t=>t.id);
   const upcomingMatches=D.matches.filter(m=>myTourIds.includes(m.tid)&&m.status!=='done');
 
+  const liveCount=D.tournaments.filter(t=>t.status==='live').length;
   el.innerHTML=`
     <div class="player-welcome">
       <h2>Welcome, ${currentUser.name}! 🎮</h2>
       <p>BGMI Name: ${currentUser.bgminame||'Not set'}</p>
     </div>
-    <div class="stats">
-      <div class="stat"><div class="stat-v">${myTeams.length}</div><div class="stat-l">My Teams</div></div>
-      <div class="stat"><div class="stat-v">${myTourIds.length}</div><div class="stat-l">Joined</div></div>
-      <div class="stat"><div class="stat-v">${upcomingMatches.length}</div><div class="stat-l">Upcoming</div></div>
-      <div class="stat"><div class="stat-v">${D.tournaments.filter(t=>t.status==='live').length}</div><div class="stat-l">Live</div></div>
-    </div>
+    <div class="icon-cards">
+      <div class="icard" onclick="go('my-tournaments')">
+        <div class="icard-icon">👥</div>
+        <div class="icard-count">${myTeams.length}</div>
+        <div class="icard-label">My Teams</div>
+      </div>
+      <div class="icard" onclick="go('my-tournaments')">
+        <div class="icard-icon">✅</div>
+        <div class="icard-count">${myTourIds.length}</div>
+        <div class="icard-label">Joined</div>
+      </div>
+      <div class="icard" onclick="go('my-matches')">
+        <div class="icard-icon">⏰</div>
+        <div class="icard-count">${upcomingMatches.length}</div>
+        <div class="icard-label">Upcoming</div>
+      </div>
+      <div class="icard ${liveCount>0?'icard-live':''}" onclick="go('my-matches')">
+        <div class="icard-icon">🔴</div>
+        <div class="icard-count">${liveCount}</div>
+        <div class="icard-label">${liveCount>0?'LIVE 🔥':'Live'}</div>
+      </div>
+    </div>`
     <div class="card">
       <h3>⚡ Quick Actions</h3>
       <div class="btn-grp">
@@ -1223,6 +1438,42 @@ initAuthState();
 // Fallback: localStorage check (for non-Firebase mode or immediate session)
 var savedUser=localStorage.getItem('bgmi-user');
 if(savedUser && !currentUser){ try{currentUser=JSON.parse(savedUser);enterApp();}catch(e){} }
+
+// ==================== BROADCAST NOTIFICATIONS ====================
+function checkBroadcastNotifications(){
+  if(!currentUser||currentUser.role==='admin')return;
+  const myTeams=D.teams.filter(t=>t.userId===currentUser.id);
+  const myTourIds=D.tournaments.filter(t=>t.teams.some(tid=>myTeams.find(m=>m.id===tid))).map(t=>t.id);
+  const lastCheck=parseInt(localStorage.getItem('bgmi-last-bc-check')||'0');
+  const newBcs=(D.broadcasts||[]).filter(b=>myTourIds.includes(b.tournamentId)&&b.created>lastCheck);
+  if(newBcs.length>0){
+    localStorage.setItem('bgmi-last-bc-check',Date.now().toString());
+    // Show notification after a short delay
+    setTimeout(function(){
+      newBcs.forEach(function(b){
+        var overlay=document.createElement('div');
+        overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:2500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;animation:fadeIn .3s';
+        overlay.innerHTML=
+          '<div style="font-size:3em;margin-bottom:10px">🔑🔥</div>'+
+          '<h2 style="color:var(--green);font-family:Orbitron;font-size:1.2em;margin-bottom:4px">ROOM ID IS LIVE!</h2>'+
+          '<div style="color:var(--blue);margin-bottom:10px;font-size:.9em">'+b.tournamentName+'</div>'+
+          '<div style="background:linear-gradient(135deg,var(--acc),var(--acc2));padding:16px 30px;border-radius:12px;margin:10px 0;font-family:Orbitron;letter-spacing:2px">'+
+            '<div style="font-size:.7em;opacity:.8">ROOM ID</div>'+
+            '<div style="font-size:1.5em;font-weight:900">'+b.roomId+'</div>'+
+            '<div style="font-size:.7em;opacity:.8;margin-top:6px">PASSWORD</div>'+
+            '<div style="font-size:1.3em;font-weight:700">'+b.password+'</div>'+
+          '</div>'+
+          '<div style="color:var(--dim);font-size:.8em;margin-bottom:16px">Check My Matches for details!</div>'+
+          '<button class="btn btn-g" onclick="document.body.removeChild(this.parentElement);go(\'my-matches\')" style="font-size:.95em;padding:12px 30px">🔥 Check Matches</button>';
+        document.body.appendChild(overlay);
+        overlay.querySelector('button').addEventListener('click',function(){document.body.removeChild(overlay);go('my-matches');});
+      });
+    },currentUser?1000:5000);
+  }
+}
+// Call after enterApp
+var origEnter=enterApp;
+enterApp=function(){origEnter();checkBroadcastNotifications();};
 
 // Eye button - touch compatible (sabhi browsers/WebView ke liye)
 function bindEye(eyeId,inputId){
