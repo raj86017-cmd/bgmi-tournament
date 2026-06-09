@@ -319,9 +319,23 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="modal">
     <h2>💳 Entry Fee Payment</h2>
     <div id="pay-content"></div>
-    <div style="text-align:center;margin-top:10px"><span style="color:var(--dim);font-size:.8em">Payment issue hai? </span><a href="#" onclick="closeModal('payment');openReportIssue()" style="color:var(--acc);font-size:.8em;font-weight:700">🚨 Report Issue</a></div>
+    <div id="pay-extra" style="display:none">
+      <div style="border-top:1px solid var(--brd);margin-top:12px;padding-top:12px">
+        <div style="font-weight:700;color:var(--blue);margin-bottom:8px;font-size:.9em">📝 Payment Confirm Karo</div>
+        <div class="fg"><label>UPI Transaction ID (UTR)</label><input type="text" id="pay-utr" placeholder="123456789012 (12 digit UTR)"></div>
+        <div class="fg"><label>Screenshot (Optional)</label>
+          <div style="position:relative">
+            <input type="file" id="pay-screenshot" accept="image/*" capture="environment" onchange="previewScreenshot()" style="display:none">
+            <button class="btn btn-s btn-sm" onclick="document.getElementById('pay-screenshot').click()" style="width:100%;justify-content:center">📷 Screenshot Upload Karo</button>
+          </div>
+          <div id="pay-screenshot-preview" style="margin-top:6px;text-align:center"></div>
+        </div>
+        <div class="btn-grp">
+          <button class="btn btn-g btn-sm" onclick="submitPaymentProof()">✅ Submit Payment Proof</button>
+        </div>
+      </div>
+    </div>
     <div class="btn-grp" style="margin-top:10px">
-      <button class="btn btn-g btn-sm" onclick="confirmPayment()">✅ Payment Done</button>
       <button class="btn btn-s btn-sm" onclick="closeModal('payment')">Close</button>
     </div>
   </div>
@@ -398,10 +412,11 @@ let D={
   matches:[],
   activities:[],
   issues:[],
+  payments:[],
   settings:{name:'',upi:'',upiname:'',whatsapp:'',contact:''}
 };
 let currentUser=null;
-let _payTeamId=null,_payTournamentId=null,_bcMatchId=null,_joinTournamentId=null,_replyIssueId=null;
+let _payTeamId=null,_payTournamentId=null,_bcMatchId=null,_joinTournamentId=null,_replyIssueId=null,_payScreenshot=null;
 
 function save(){localStorage.setItem('bgmi-v2',JSON.stringify(D));}
 function load(){const d=localStorage.getItem('bgmi-v2');if(d){try{D={...D,...JSON.parse(d)};}catch(e){}}}
@@ -639,6 +654,7 @@ function payTournamentFee(tid,tmid){
   const t=D.tournaments.find(x=>x.id===tid);
   if(!t||!t.fee||!D.settings.upi){toast('❌ UPI ID set nahi hai ya free hai!');return;}
   const upiLink=`upi://pay?pa=${encodeURIComponent(D.settings.upi)}&pn=${encodeURIComponent(D.settings.upiname||D.settings.name)}&am=${t.fee}&cu=INR&tn=${encodeURIComponent('Entry: '+t.name)}`;
+  _payScreenshot=null;
   let h=`<div class="pay-card">
     <h4>💳 ENTRY FEE</h4>
     <div style="color:var(--dim);font-size:.85em">${t.name}</div>
@@ -649,16 +665,62 @@ function payTournamentFee(tid,tmid){
   </div>
   <div style="text-align:center;margin:10px 0">
     <a href="${upiLink}" style="display:inline-block;padding:12px 30px;background:linear-gradient(135deg,#00b9f5,#7b61ff);color:#fff;text-decoration:none;border-radius:10px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:.9em">💰 Pay ₹${t.fee} via UPI</a>
-  </div>`;
+  </div>
+  <div style="font-size:.8em;color:var(--dim);text-align:center;margin-bottom:6px">Upar button se pay karo → UPI ID copy karo ya scan karo</div>`;
   document.getElementById('pay-content').innerHTML=h;
+  document.getElementById('pay-extra').style.display='block';
+  document.getElementById('pay-utr').value='';
+  document.getElementById('pay-screenshot-preview').innerHTML='';
   openModal('payment');
 }
-function confirmPayment(){
+
+function previewScreenshot(){
+  const file=document.getElementById('pay-screenshot').files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){toast('❌ Screenshot 2MB se chhota hona chahiye!');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    _payScreenshot=e.target.result;
+    document.getElementById('pay-screenshot-preview').innerHTML=`<img src="${e.target.result}" style="max-width:100%;max-height:150px;border-radius:8px;border:1px solid var(--brd)">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitPaymentProof(){
+  const utr=document.getElementById('pay-utr').value.trim();
+  if(!utr||utr.length<6){toast('❌ UTR number daalo (kam se kam 6 digits)!');return;}
   const t=D.tournaments.find(x=>x.id===_payTournamentId);
   if(!t)return;
-  if(!t.paid)t.paid=[];
-  if(!t.paid.includes(_payTeamId)){t.paid.push(_payTeamId);addAct(`💰 Payment confirmed: ${_payTeamId}`);}
-  save();closeModal('payment');renderAll();toast('✅ Payment confirmed!');
+  const tm=D.teams.find(x=>x.id===_payTeamId);
+  // Check duplicate UTR
+  if(D.payments.find(p=>p.utr===utr)){toast('❌ Ye UTR pehle use ho chuka hai!');return;}
+  const payment={id:gid(),tournamentId:_payTournamentId,teamId:_payTeamId,teamName:tm?.name||'',teamTag:tm?.tag||'',userId:currentUser.id,userName:currentUser.name,amount:t.fee,utr,screenshot:_payScreenshot||null,status:'pending',created:Date.now()};
+  D.payments.push(payment);
+  addAct(`💳 Payment proof submitted by "${currentUser.name}" — UTR: ${utr}`);
+  save();closeModal('payment');renderAll();toast('✅ Payment proof submit ho gaya! Admin jaldi verify karega. 💪');
+  _payScreenshot=null;
+}
+
+function autoVerifyPayment(paymentId){
+  const p=D.payments.find(x=>x.id===paymentId);
+  if(!p||p.status!=='pending')return;
+  p.status='verified';
+  const t=D.tournaments.find(x=>x.id===p.tournamentId);
+  if(t){
+    if(!t.paid)t.paid=[];
+    if(!t.paid.includes(p.teamId))t.paid.push(p.teamId);
+  }
+  addAct(`✅ Auto-verified: "${p.userName}" ₹${p.amount} — UTR: ${p.utr}`);
+  save();renderAll();toast('✅ Payment verified!');
+}
+
+function rejectPayment(paymentId){
+  const p=D.payments.find(x=>x.id===paymentId);
+  if(!p)return;
+  p.status='rejected';
+  addAct(`❌ Payment rejected: "${p.userName}" — UTR: ${p.utr}`);
+  save();renderAll();toast('❌ Payment rejected');
+}
 }
 
 // ==================== TEAM ====================
@@ -914,9 +976,14 @@ function openReportIssue(){
 function renderSupport(){
   const el=document.getElementById('page-support');if(!el)return;
   const myIssues=D.issues.filter(i=>i.userId===currentUser.id);
+  const myPayments=D.payments.filter(p=>p.userId===currentUser.id);
   const contactLine=D.settings.whatsapp?`WhatsApp: ${D.settings.whatsapp}`:D.settings.contact?`Contact: ${D.settings.contact}`:D.settings.upi?`UPI: ${D.settings.upi}`:'Abhi available nahi';
   el.innerHTML=`
     <h2 style="font-family:Orbitron;color:var(--acc);font-size:1em;margin-bottom:12px">🆘 Help & Support</h2>
+    ${myPayments.length?`<div class="support-card"><h3 style="color:var(--blue);margin-bottom:8px;font-size:.95em">💳 Meri Payments</h3>${myPayments.map(p=>{
+      const t=D.tournaments.find(x=>x.id===p.tournamentId);
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);font-size:.85em"><span>${t?.name||'?'} — ₹${p.amount}</span><span class="issue-status ${p.status==='verified'?'resolved':p.status==='rejected'?'rejected':'pending'}">${p.status==='verified'?'✅ Verified':p.status==='rejected'?'❌ Rejected':'⏳ Pending'}</span></div>`;
+    }).join('')}</div>`:''}
     <div class="support-card">
       <h3 style="color:var(--blue);margin-bottom:8px;font-size:.95em">📞 Contact Organizer</h3>
       <div style="color:var(--text);font-size:.9em;margin-bottom:8px">${contactLine}</div>
@@ -945,16 +1012,23 @@ function renderAdminSupport(){
   const el=document.getElementById('page-admin-support');if(!el)return;
   const pending=D.issues.filter(i=>i.status==='pending');
   const resolved=D.issues.filter(i=>i.status!=='pending');
+  const pendingPayments=D.payments.filter(p=>p.status==='pending');
+  const verifiedPayments=D.payments.filter(p=>p.status==='verified');
   el.innerHTML=`
     <h2 style="font-family:Orbitron;color:var(--acc);font-size:1em;margin-bottom:12px">🚨 Support Issues</h2>
     <div class="stats">
-      <div class="stat"><div class="stat-v">${pending.length}</div><div class="stat-l">Pending</div></div>
-      <div class="stat"><div class="stat-v">${D.issues.length}</div><div class="stat-l">Total</div></div>
+      <div class="stat"><div class="stat-v">${pending.length}</div><div class="stat-l">Pending Issues</div></div>
+      <div class="stat"><div class="stat-v">${pendingPayments.length}</div><div class="stat-l">Payment Proofs</div></div>
     </div>
-    ${pending.length?`<h3 style="color:var(--gold);font-size:.85em;margin-bottom:8px">⏳ Pending Issues</h3>${pending.map(i=>{
+    ${pendingPayments.length?`<div class="card" style="border-left:3px solid var(--gold)"><h3 style="color:var(--gold);font-size:.9em;margin-bottom:10px">💳 Payment Proofs — Verify Karo</h3>${pendingPayments.map(p=>{
+      const t=D.tournaments.find(x=>x.id===p.tournamentId);
+      return`<div class="issue-card" style="border-left:3px solid var(--blue)"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700">${p.userName} <span class="tag" style="background:rgba(0,212,255,.15);color:var(--blue)">${p.teamTag}</span></span><span style="font-family:Orbitron;color:var(--acc);font-weight:700">₹${p.amount}</span></div><div style="font-size:.82em;color:var(--dim);margin-top:4px">Team: ${p.teamName} • Tournament: ${t?.name||'?'}</div><div style="margin-top:6px;padding:8px;background:var(--bg);border-radius:6px"><div style="font-size:.75em;color:var(--dim)">UPI TRANSACTION ID (UTR)</div><div style="font-family:Orbitron;font-size:1.1em;color:var(--green);letter-spacing:2px;font-weight:700">${p.utr}</div></div>${p.screenshot?`<div style="margin-top:8px;text-align:center"><img src="${p.screenshot}" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--brd);cursor:pointer" onclick="window.open('${p.screenshot}','_blank')"></div>`:'<div style="font-size:.8em;color:var(--dim);margin-top:4px">📷 Screenshot nahi diya</div>'}<div style="font-size:.75em;color:var(--dim);margin-top:4px">${fmtDate(p.created)}</div><div class="btn-grp"><button class="btn btn-sm btn-g" onclick="autoVerifyPayment('${p.id}')">✅ Verify</button><button class="btn btn-sm btn-d" onclick="rejectPayment('${p.id}')">❌ Reject</button></div></div>`;
+    }).join('')}</div>`:'<div style="color:var(--green);text-align:center;padding:10px">✅ Koi pending payment nahi!</div>'}
+    ${verifiedPayments.length?`<div style="margin-top:12px"><h3 style="color:var(--green);font-size:.85em;margin-bottom:8px">✅ Verified Payments (${verifiedPayments.length})</h3><div style="max-height:150px;overflow-y:auto">${verifiedPayments.slice(0,20).map(p=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--brd);font-size:.82em"><span>${p.userName} — ${p.teamTag}</span><span style="color:var(--green)">₹${p.amount} ✅</span></div>`).join('')}</div></div>`:''}
+    ${pending.length?`<div style="margin-top:16px"><h3 style="color:var(--gold);font-size:.9em;margin-bottom:8px">📋 Payment Issues (${pending.length})</h3>${pending.map(i=>{
       const t=D.tournaments.find(x=>x.id===i.tournamentId);
       return`<div class="issue-card" style="border-left:3px solid var(--gold)"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700">${i.userName}</span><span class="issue-status pending">⏳ Pending</span></div><div style="margin-top:4px;font-size:.85em"><b>₹${i.amount}</b> — ${t?.name||'?'}<br><span style="color:var(--dim)">Team: ${i.team} • TXN: ${i.txn}</span></div>${i.desc?`<div style="margin-top:4px;font-size:.8em;color:var(--dim)">"${i.desc}"</div>`:''}${i.phone?`<div style="font-size:.78em;color:var(--blue);margin-top:2px">📱 ${i.phone}</div>`:''}<div style="font-size:.75em;color:var(--dim);margin-top:2px">${fmtDate(i.created)}</div><div class="btn-grp"><button class="btn btn-sm btn-p" onclick="openAdminReply('${i.id}')">💬 Reply</button><button class="btn btn-sm btn-g" onclick="resolveIssue('${i.id}','${currentUser.name}')">✅ Resolve</button></div></div>`;
-    }).join('')}`:'<div style="color:var(--green);text-align:center;padding:10px">✅ Koi pending issue nahi!</div>'}
+    }).join('')}</div>`:'<div style="color:var(--green);text-align:center;padding:10px">✅ Koi pending issue nahi!</div>'}
     ${resolved.length?`<h3 style="color:var(--green);font-size:.85em;margin:12px 0 8px">✅ Resolved</h3>${resolved.slice(0,10).map(i=>{
       const t=D.tournaments.find(x=>x.id===i.tournamentId);
       return`<div class="issue-card" style="opacity:.7"><div style="display:flex;justify-content:space-between"><span style="font-weight:700;font-size:.85em">${i.userName}</span><span class="issue-status ${i.status}">${i.status==='resolved'?'✅ Resolved':'❌ Rejected'}</span></div><div style="font-size:.78em;color:var(--dim);margin-top:3px">₹${i.amount} — ${t?.name||'?'} — ${i.team}</div></div>`;
