@@ -174,11 +174,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- LOGIN FORM -->
     <div class="auth-form active" id="login-form">
       <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com"></div>
-      <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"></div>
+      <div id="login-error" style="display:none;background:rgba(255,70,85,.15);border:1px solid var(--acc);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:.85em;color:var(--acc);text-align:center"></div>
       <button class="btn btn-p btn-full" onclick="doLogin()">🔑 Login</button>
-      <div style="text-align:center;margin-top:12px;color:var(--dim);font-size:.8em">
-        Admin? <b style="color:var(--acc)">admin@rcb.com / admin123</b> se login karo
-      </div>
     </div>
 
     <!-- SIGNUP FORM -->
@@ -439,7 +437,13 @@ function showAuthTab(tab){
 function doLogin(){
   const email=document.getElementById('login-email').value.trim();
   const pass=document.getElementById('login-pass').value;
-  if(!email||!pass){toast('❌ Email aur Password daalo!');return;}
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
+  if(!email||!pass){
+    errEl.textContent='❌ Email aur Password dono daalo!';
+    errEl.style.display='block';
+    return;
+  }
 
   // Admin login
   if(email==='admin@rcb.com'&&pass==='admin123'){
@@ -451,7 +455,17 @@ function doLogin(){
 
   // Player login
   const user=D.users.find(u=>u.email===email&&u.pass===pass);
-  if(!user){toast('❌ Galat email ya password!');return;}
+  if(!user){
+    // Check if email exists
+    const emailExists=D.users.find(u=>u.email===email);
+    if(emailExists){
+      errEl.textContent='❌ Galat password hai! Sahi password daalo.';
+    } else {
+      errEl.textContent='❌ Ye email registered nahi hai! Pehle Sign Up karo.';
+    }
+    errEl.style.display='block';
+    return;
+  }
   currentUser=user;
   localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
   enterApp();
