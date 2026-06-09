@@ -57,6 +57,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--brd);border-radius:8px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:1em;}
 .fg input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 8px rgba(255,70,85,.2);}
 .fg select option{background:var(--bg);}
+.fg-pw{position:relative;}
+.fg-pw input{padding-right:40px;}
+.eye-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--dim);font-size:1.2em;cursor:pointer;padding:4px;z-index:2;}
+.eye-btn:hover{color:var(--text);}
 
 /* BUTTONS */
 .btn{padding:9px 20px;border:none;border-radius:8px;font-family:'Orbitron',sans-serif;font-size:.78em;font-weight:700;cursor:pointer;transition:all .3s;text-transform:uppercase;letter-spacing:1px;display:inline-flex;align-items:center;gap:6px;}
@@ -173,8 +177,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     <!-- LOGIN FORM -->
     <div class="auth-form active" id="login-form">
-      <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com"></div>
-      <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"></div>
+      <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" onkeypress="if(event.key==='Enter')doLogin()"></div>
+      <div class="fg fg-pw"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"><button type="button" class="eye-btn" onclick="togglePass('login-pass',this)">👁️</button></div>
       <div id="login-error" style="display:none;background:rgba(255,70,85,.15);border:1px solid var(--acc);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:.85em;color:var(--acc);text-align:center"></div>
       <button class="btn btn-p btn-full" onclick="doLogin()">🔑 Login</button>
     </div>
@@ -185,7 +189,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Email</label><input type="email" id="signup-email" placeholder="your@email.com"></div>
       <div class="fg"><label>Phone (WhatsApp)</label><input type="tel" id="signup-phone" placeholder="919876543210"></div>
       <div class="fg"><label>BGMI Name</label><input type="text" id="signup-bgminame" placeholder="In-game name"></div>
-      <div class="fg"><label>Password</label><input type="password" id="signup-pass" placeholder="••••••••"></div>
+      <div class="fg fg-pw"><label>Password</label><input type="password" id="signup-pass" placeholder="••••••••"><button type="button" class="eye-btn" onclick="togglePass('signup-pass',this)">👁️</button></div>
       <button class="btn btn-p btn-full" onclick="doSignup()">📝 Sign Up</button>
     </div>
   </div>
@@ -566,6 +570,12 @@ document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=
 
 // ==================== TOAST ====================
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+function togglePass(id,btn){
+  const inp=document.getElementById(id);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁️';}
+}
 
 // ==================== SETTINGS ====================
 function saveSettings(){
