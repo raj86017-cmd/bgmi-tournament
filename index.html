@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="v12">
+<meta name="version" content="v13">
 <meta name="theme-color" content="#ff4655">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -34,15 +34,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .auth-subtitle{color:var(--dim);text-align:center;margin-bottom:25px;font-size:.9em;}
 .auth-card{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:24px;width:100%;max-width:400px;}
 .auth-card h2{font-family:'Orbitron',sans-serif;font-size:1.1em;color:var(--acc);text-align:center;margin-bottom:16px;}
-.auth-tabs{display:flex;gap:4px;margin-bottom:16px;}
-.auth-tab{flex:1;padding:10px;text-align:center;border:1px solid var(--brd);background:var(--card2);color:var(--dim);border-radius:8px;font-weight:700;cursor:pointer;transition:all .3s;}
-.auth-tab.active{background:var(--acc);color:#fff;border-color:var(--acc);}
 .auth-form{display:none;}
 .auth-form.active{display:block;}
 .pass-wrap{position:relative;display:flex;align-items:center;}
-.pass-wrap input{flex:1;padding-right:45px!important;}
-.eye-btn{position:absolute;right:10px;background:none;border:none;cursor:pointer;font-size:18px;padding:5px;z-index:10;-webkit-tap-highlight-color:transparent;color:var(--dim);line-height:1;}
+.pass-wrap input{width:100%;padding-right:46px !important;}
+.eye-btn{position:absolute;right:0;top:0;height:100%;width:44px;background:none;border:none;cursor:pointer;font-size:18px;touch-action:manipulation;z-index:10;color:var(--dim);}
 .eye-btn:hover,.eye-btn:active{color:var(--text);}
+.auth-err{background:rgba(255,70,85,.15);border:1px solid #ff4655;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:.85em;color:#ff4655;text-align:center;display:none;}
+.auth-link{text-align:center;margin-top:12px;font-size:.85em;color:var(--dim);}
+.auth-link a{text-decoration:none;font-weight:700;}
+.auth-link a.login-link{color:var(--acc);}
+.auth-link a.signup-link{color:var(--blue);}
 
 /* HEADER */
 .hdr{text-align:center;padding:14px 12px 8px;border-bottom:2px solid var(--acc);background:linear-gradient(180deg,rgba(255,70,85,.1),transparent);position:relative;}
@@ -76,8 +78,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .fg select option{background:var(--bg);}
 .fg-pw{position:relative;}
 .fg-pw input{padding-right:40px;}
-.eye-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--dim);font-size:1.2em;cursor:pointer;padding:4px;z-index:2;}
-.eye-btn:hover{color:var(--text);}
 
 /* BUTTONS */
 .btn{padding:9px 20px;border:none;border-radius:8px;font-family:'Orbitron',sans-serif;font-size:.78em;font-weight:700;cursor:pointer;transition:all .3s;text-transform:uppercase;letter-spacing:1px;display:inline-flex;align-items:center;gap:6px;}
@@ -202,24 +202,26 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- LOGIN FORM -->
     <div class="auth-form active" id="loginForm">
       <h2>🔑 Login</h2>
+      <div class="auth-err" id="loginErr"></div>
       <div class="fg"><label>Email</label>
         <input type="text" id="loginEmail" placeholder="Email ya username">
       </div>
       <div class="fg"><label>Password</label>
         <div class="pass-wrap">
-          <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+          <input type="password" id="loginPass" placeholder="Password">
           <button type="button" id="loginEye" class="eye-btn">👁️</button>
         </div>
       </div>
       <button type="button" class="btn btn-p btn-full" onclick="doLogin()">🔑 Login</button>
-      <div style="text-align:center;margin-top:12px;font-size:.85em;color:var(--dim)">
-        Account nahi hai? <a href="javascript:void(0)" onclick="showSignup()" style="color:var(--blue);text-decoration:none">Sign Up</a>
+      <div class="auth-link">
+        Account nahi hai? <a href="javascript:void(0)" onclick="showSignup()" class="signup-link">Sign Up</a>
       </div>
     </div>
 
     <!-- SIGNUP FORM -->
     <div class="auth-form" id="signupForm">
       <h2>📝 Sign Up</h2>
+      <div class="auth-err" id="signupErr"></div>
       <div class="fg"><label>Player Name</label>
         <input type="text" id="signupName" placeholder="Tera naam">
       </div>
@@ -234,13 +236,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
       <div class="fg"><label>Password</label>
         <div class="pass-wrap">
-          <input type="password" id="signupPass" placeholder="Password (min 6 chars)" autocomplete="new-password">
+          <input type="password" id="signupPass" placeholder="Password (min 6 chars)">
           <button type="button" id="signupEye" class="eye-btn">👁️</button>
         </div>
       </div>
       <button type="button" class="btn btn-p btn-full" onclick="doSignup()">📝 Sign Up</button>
-      <div style="text-align:center;margin-top:12px;font-size:.85em;color:var(--dim)">
-        Already have account? <a href="javascript:void(0)" onclick="showLogin()" style="color:var(--acc);text-decoration:none">Login</a>
+      <div class="auth-link">
+        Already have account? <a href="javascript:void(0)" onclick="showLogin()" class="login-link">Login</a>
       </div>
     </div>
   </div>
@@ -545,13 +547,18 @@ function showLogin(){
     var btn=document.getElementById(eyeId);
     var inp=document.getElementById(inputId);
     if(!btn||!inp)return;
+    var lastTime=0;
     function toggle(e){
       e.preventDefault();
+      e.stopPropagation();
+      var now=Date.now();
+      if(now-lastTime<300)return;
+      lastTime=now;
       if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
       else{inp.type='password';btn.textContent='👁️';}
     }
-    btn.addEventListener('click',toggle);
-    btn.addEventListener('touchend',toggle);
+    btn.addEventListener('click',toggle,false);
+    btn.addEventListener('touchend',toggle,{passive:false});
   }
   document.addEventListener('DOMContentLoaded',function(){
     setupEye('loginEye','loginPass');
@@ -562,72 +569,68 @@ function showLogin(){
 // ===== SIGNUP =====
 function doSignup(){
   var name=document.getElementById('signupName').value.trim();
-  var email=document.getElementById('signupEmail').value.trim();
+  var email=document.getElementById('signupEmail').value.trim().toLowerCase();
   var phone=document.getElementById('signupPhone').value.trim();
   var bgmi=document.getElementById('signupBgmi').value.trim();
   var pass=document.getElementById('signupPass').value.trim();
-  if(!name||!email||!phone||!bgmi||!pass){alert('❌ Sab fields bharo!');return;}
-  if(pass.length<6){alert('❌ Password kam se kam 6 characters ka hona chahiye!');return;}
+  var err=document.getElementById('signupErr');
+  err.style.display='none';
+  if(!name||!email||!phone||!bgmi||!pass){err.textContent='⚠️ Sab fields bharo!';err.style.display='block';return;}
+  if(pass.length<6){err.textContent='⚠️ Password min 6 characters!';err.style.display='block';return;}
   var users=JSON.parse(localStorage.getItem('bgmi_users')||'[]');
-  if(users.find(function(u){return u.email===email;})){alert('❌ Yeh email pehle se registered hai!');return;}
-  var newUser={name:name,email:email,phone:phone,bgmi:bgmi,pass:pass,role:'player',joinedAt:new Date().toISOString()};
+  if(users.find(function(u){return u.email===email;})){err.textContent='❌ Email pehle se registered hai!';err.style.display='block';return;}
+  var newUser={name:name,email:email,phone:phone,bgmi:bgmi,pass:pass,role:'player'};
   users.push(newUser);
   localStorage.setItem('bgmi_users',JSON.stringify(users));
   localStorage.setItem('bgmi_loggedIn',JSON.stringify(newUser));
-  currentUser={id:email,name:name,email:email,role:'player',bgmi:bgmi,phone:phone};
-  addAct('👤 "'+name+'" ne sign up kiya!');
-  enterApp();
+  showDashboard(newUser);
 }
 
 // ===== LOGIN =====
 function doLogin(){
-  var email=document.getElementById('loginEmail').value.trim();
+  var email=document.getElementById('loginEmail').value.trim().toLowerCase();
   var pass=document.getElementById('loginPass').value.trim();
-  if(!email||!pass){alert('❌ Email aur password daalo!');return;}
+  var err=document.getElementById('loginErr');
+  err.style.display='none';
+  if(!email||!pass){err.textContent='⚠️ Email aur password daalo!';err.style.display='block';return;}
   // Admin check
   if(email==='admin@bgmi.com'&&pass==='admin123'){
-    currentUser={id:'admin',name:'Admin',email:email,role:'admin'};
-    localStorage.setItem('bgmi_loggedIn',JSON.stringify(currentUser));
-    addAct('👑 Admin login!');
-    enterApp();
+    var admin={name:'Admin',email:email,role:'admin'};
+    localStorage.setItem('bgmi_loggedIn',JSON.stringify(admin));
+    showDashboard(admin);
     return;
   }
   // Player check
   var users=JSON.parse(localStorage.getItem('bgmi_users')||'[]');
   var user=users.find(function(u){return u.email===email&&u.pass===pass;});
   if(!user){
-    var exists=users.find(function(u){return u.email===email;});
-    if(exists) alert('❌ Galat password!');
-    else alert('❌ Email registered nahi hai! Pehle Sign Up karo.');
+    err.textContent='❌ Email ya password galat hai!';
+    err.style.display='block';
     return;
   }
-  currentUser={id:user.email,name:user.name,email:user.email,role:'player',bgmi:user.bgmi,phone:user.phone};
-  localStorage.setItem('bgmi_loggedIn',JSON.stringify(currentUser));
-  addAct('🔑 "'+user.name+'" ne login kiya!');
-  enterApp();
+  localStorage.setItem('bgmi_loggedIn',JSON.stringify(user));
+  showDashboard(user);
+}
+
+// ===== SHOW DASHBOARD =====
+function showDashboard(user){
+  currentUser={id:user.email,name:user.name,email:user.email,role:user.role,bgmi:user.bgmi||'Not set',phone:user.phone||''};
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+  var el=document.getElementById('userName');
+  if(el){
+    var badge=currentUser.role==='admin'?' <span class="hdr-role admin">ADMIN</span>':' <span class="hdr-role player">PLAYER</span>';
+    el.innerHTML=currentUser.name+badge;
+  }
+  buildNav();
+  renderAll();
+  setTimeout(function(){try{checkBroadcastNotifications();}catch(e){}},1000);
 }
 
 // ===== LOGOUT =====
 function doLogout(){
   localStorage.removeItem('bgmi_loggedIn');
-  localStorage.removeItem('bgmi-user');
-  currentUser=null;
   location.reload();
-}
-
-// ===== ENTER APP =====
-function enterApp(){
-  document.getElementById('authScreen').style.display='none';
-  document.getElementById('mainApp').style.display='block';
-  var el=document.getElementById('userName');
-  if(el&&currentUser){
-    var roleBadge=currentUser.role==='admin'?' <span class="hdr-role admin">ADMIN</span>':' <span class="hdr-role player">PLAYER</span>';
-    el.innerHTML=currentUser.name+roleBadge;
-  }
-  buildNav();
-  renderAll();
-  // Check broadcast notifications after entering
-  setTimeout(function(){try{checkBroadcastNotifications();}catch(e){}},1000);
 }
 
 // ==================== NAVIGATION ====================
@@ -665,7 +668,7 @@ function buildNav(){
   // Header user info
   const roleClass=currentUser?.role==='admin'?'admin':'player';
   const roleLabel=currentUser?.role==='admin'?'👑 ADMIN':'🎮 PLAYER';
-  document.getElementById('hdr-user').innerHTML=`<span class="hdr-role ${roleClass}">${roleLabel}</span> ${currentUser?.name}`;
+  document.getElementById('userName').innerHTML=`<span class="hdr-role ${roleClass}">${roleLabel}</span> ${currentUser?.name}`;
 
   // Event listeners
   document.querySelectorAll('[data-page]').forEach(b=>{
@@ -1394,31 +1397,17 @@ function tAgo(ts){const d=Date.now()-ts;if(d<60000)return'abhi';if(d<3600000)ret
 // ==================== INIT ====================
 load();
 // ===== AUTO LOGIN CHECK =====
-(function(){
-  var saved=localStorage.getItem('bgmi_loggedIn');
-  if(saved){
-    try{
+document.addEventListener('DOMContentLoaded',function(){
+  try{
+    var saved=localStorage.getItem('bgmi_loggedIn');
+    if(saved){
       var user=JSON.parse(saved);
-      if(user&&user.email){
-        var users=JSON.parse(localStorage.getItem('bgmi_users')||'[]');
-        var fullUser=users.find(function(u){return u.email===user.email;});
-        if(fullUser){
-          currentUser={id:fullUser.email,name:fullUser.name,email:fullUser.email,role:fullUser.role,bgmi:fullUser.bgmi,phone:fullUser.phone};
-        } else {
-          currentUser=user;
-        }
-        if(document.readyState==='loading'){
-          document.addEventListener('DOMContentLoaded',function(){enterApp();setTimeout(checkBroadcastNotifications,1000);});
-        } else {
-          enterApp();
-          setTimeout(checkBroadcastNotifications,1000);
-        }
-      }
-    }catch(e){
-      localStorage.removeItem('bgmi_loggedIn');
+      if(user&&user.email) showDashboard(user);
     }
+  }catch(e){
+    localStorage.removeItem('bgmi_loggedIn');
   }
-})();
+});
 
 // ==================== BROADCAST NOTIFICATIONS ====================
 function checkBroadcastNotifications(){
