@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="v13">
+<meta name="version" content="v14">
 <meta name="theme-color" content="#ff4655">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -535,10 +535,12 @@ async function fbSyncAll(){
 function showSignup(){
   document.getElementById('loginForm').classList.remove('active');
   document.getElementById('signupForm').classList.add('active');
+  document.getElementById('loginErr').style.display='none';
 }
 function showLogin(){
   document.getElementById('signupForm').classList.remove('active');
   document.getElementById('loginForm').classList.add('active');
+  document.getElementById('signupErr').style.display='none';
 }
 
 // ===== EYE BUTTON =====
@@ -552,7 +554,7 @@ function showLogin(){
       e.preventDefault();
       e.stopPropagation();
       var now=Date.now();
-      if(now-lastTime<300)return;
+      if(now-lastTime<500)return;
       lastTime=now;
       if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
       else{inp.type='password';btn.textContent='👁️';}
@@ -565,6 +567,17 @@ function showLogin(){
     setupEye('signupEye','signupPass');
   });
 })();
+
+// ===== ENTER KEY SUPPORT =====
+// Mobile keyboard "Go" button se login/signup trigger
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('loginPass').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();doLogin();}
+  });
+  document.getElementById('signupPass').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();doSignup();}
+  });
+});
 
 // ===== SIGNUP =====
 function doSignup(){
@@ -600,9 +613,27 @@ function doLogin(){
     showDashboard(admin);
     return;
   }
-  // Player check
+  // Player check - first bgmi_users, then fallback to old D.users
   var users=JSON.parse(localStorage.getItem('bgmi_users')||'[]');
   var user=users.find(function(u){return u.email===email&&u.pass===pass;});
+  // Fallback: check old bgmi-v2 D.users
+  if(!user){
+    try{
+      var old=JSON.parse(localStorage.getItem('bgmi-v2')||'{}');
+      if(old&&old.users){
+        user=old.users.find(function(u){return (u.email||'').toLowerCase()===email&&u.pass===pass;});
+        if(user){
+          // Migrate to new system
+          var newUser={name:user.name,email:user.email,phone:user.phone||'',bgmi:user.bgmi||user.bgminame||'',pass:user.pass,role:user.role||'player'};
+          users.push(newUser);
+          localStorage.setItem('bgmi_users',JSON.stringify(users));
+          localStorage.setItem('bgmi_loggedIn',JSON.stringify(newUser));
+          showDashboard(newUser);
+          return;
+        }
+      }
+    }catch(e){}
+  }
   if(!user){
     err.textContent='❌ Email ya password galat hai!';
     err.style.display='block';
