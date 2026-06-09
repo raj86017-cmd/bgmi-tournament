@@ -447,9 +447,12 @@ function showAuthTab(tab){
 }
 
 function doLogin(){
-  const loginInput=document.getElementById('login-email').value.trim();
-  const pass=document.getElementById('login-pass').value.trim();
-  const email=loginInput.toLowerCase();
+  const emailEl=document.getElementById('login-email');
+  const passEl=document.getElementById('login-pass');
+  const loginInput=emailEl.value||'';
+  const passInput=passEl.value||'';
+  const email=loginInput.trim().toLowerCase();
+  const pass=passInput.trim();
   const errEl=document.getElementById('login-error');
   errEl.style.display='none';
   if(!email||!pass){
@@ -459,10 +462,15 @@ function doLogin(){
   }
 
   // Admin login
-  const adminEmails=['admin@rcb.com','admin','ladakusena01'];
-  const adminPass='Mohit@kumar1234';
-  if(adminEmails.includes(email)&&pass===adminPass){
-    currentUser={id:'admin',name:'Admin (Mohit)',email:'ladakusena01',role:'admin'};
+  // Check admin - multiple ways
+  const isAdminEmail=(email==='ladakusena01'||email==='admin@rcb.com'||email==='admin');
+  const isAdminPass=(pass==='Mohit@kumar1234');
+
+  // DEBUG - remove later
+  alert('Email: ['+email+'] Pass: ['+pass+'] EmailMatch: '+isAdminEmail+' PassMatch: '+isAdminPass);
+
+  if(isAdminEmail&&isAdminPass){
+    currentUser={id:'admin',name:'Mohit Kumar',email:'ladakusena01',role:'admin'};
     localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
     enterApp();
     return;
