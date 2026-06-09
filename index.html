@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="v11">
+<meta name="version" content="v12">
 <meta name="theme-color" content="#ff4655">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -39,6 +39,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .auth-tab.active{background:var(--acc);color:#fff;border-color:var(--acc);}
 .auth-form{display:none;}
 .auth-form.active{display:block;}
+.pass-wrap{position:relative;display:flex;align-items:center;}
+.pass-wrap input{flex:1;padding-right:45px!important;}
+.eye-btn{position:absolute;right:10px;background:none;border:none;cursor:pointer;font-size:18px;padding:5px;z-index:10;-webkit-tap-highlight-color:transparent;color:var(--dim);line-height:1;}
+.eye-btn:hover,.eye-btn:active{color:var(--text);}
 
 /* HEADER */
 .hdr{text-align:center;padding:14px 12px 8px;border-bottom:2px solid var(--acc);background:linear-gradient(180deg,rgba(255,70,85,.1),transparent);position:relative;}
@@ -190,45 +194,67 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <body>
 
 <!-- ==================== AUTH SCREEN ==================== -->
-<div class="auth-screen" id="auth-screen">
+<div class="auth-screen" id="authScreen">
   <div class="auth-logo">⚔️ BGMI TOURNAMENT</div>
   <div class="auth-subtitle">Organize • Play • Win 🏆</div>
 
   <div class="auth-card">
-    <div class="auth-tabs">
-      <div class="auth-tab active" onclick="showAuthTab('login')">🔑 Login</div>
-      <div class="auth-tab" onclick="showAuthTab('signup')">📝 Sign Up</div>
-    </div>
-
     <!-- LOGIN FORM -->
-    <div class="auth-form active" id="login-form">
-      <div class="fg"><label>Email</label><input type="text" id="login-email" placeholder="Email ya username"></div>
-      <div class="fg"><label>Password</label><div style="position:relative"><input type="password" id="login-pass" placeholder="Password" style="padding-right:42px"><span id="eye-login" onclick="togglePass('login-pass')" ontouchend="togglePass('login-pass')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1.3em;-webkit-user-select:none;user-select:none;touch-action:manipulation">👁️</span></div></div>
-      <div id="login-error" style="display:none;background:rgba(255,70,85,.15);border:1px solid var(--acc);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:.85em;color:var(--acc);text-align:center"></div>
-      <button class="btn btn-p btn-full" onclick="doLogin()" ontouchend="doLogin()">🔑 Login</button>
+    <div class="auth-form active" id="loginForm">
+      <h2>🔑 Login</h2>
+      <div class="fg"><label>Email</label>
+        <input type="text" id="loginEmail" placeholder="Email ya username">
+      </div>
+      <div class="fg"><label>Password</label>
+        <div class="pass-wrap">
+          <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+          <button type="button" id="loginEye" class="eye-btn">👁️</button>
+        </div>
+      </div>
+      <button type="button" class="btn btn-p btn-full" onclick="doLogin()">🔑 Login</button>
+      <div style="text-align:center;margin-top:12px;font-size:.85em;color:var(--dim)">
+        Account nahi hai? <a href="javascript:void(0)" onclick="showSignup()" style="color:var(--blue);text-decoration:none">Sign Up</a>
+      </div>
     </div>
 
     <!-- SIGNUP FORM -->
-    <div class="auth-form" id="signup-form">
-      <div class="fg"><label>Player Name</label><input type="text" id="signup-name" placeholder="Tera naam"></div>
-      <div class="fg"><label>Email</label><input type="email" id="signup-email" placeholder="your@email.com"></div>
-      <div class="fg"><label>Phone (WhatsApp)</label><input type="tel" id="signup-phone" placeholder="919876543210"></div>
-      <div class="fg"><label>BGMI Name</label><input type="text" id="signup-bgminame" placeholder="In-game name"></div>
-      <div class="fg"><label>Password</label><div style="position:relative"><input type="password" id="signup-pass" placeholder="Password" style="padding-right:42px"><span id="eye-signup" onclick="togglePass('signup-pass')" ontouchend="togglePass('signup-pass')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1.3em;-webkit-user-select:none;user-select:none;touch-action:manipulation">👁️</span></div></div>
-      <button class="btn btn-p btn-full" onclick="doSignup()" ontouchend="doSignup()">📝 Sign Up</button>
+    <div class="auth-form" id="signupForm">
+      <h2>📝 Sign Up</h2>
+      <div class="fg"><label>Player Name</label>
+        <input type="text" id="signupName" placeholder="Tera naam">
+      </div>
+      <div class="fg"><label>Email</label>
+        <input type="email" id="signupEmail" placeholder="your@email.com">
+      </div>
+      <div class="fg"><label>Phone (WhatsApp)</label>
+        <input type="tel" id="signupPhone" placeholder="919876543210">
+      </div>
+      <div class="fg"><label>BGMI Name</label>
+        <input type="text" id="signupBgmi" placeholder="In-game name">
+      </div>
+      <div class="fg"><label>Password</label>
+        <div class="pass-wrap">
+          <input type="password" id="signupPass" placeholder="Password (min 6 chars)" autocomplete="new-password">
+          <button type="button" id="signupEye" class="eye-btn">👁️</button>
+        </div>
+      </div>
+      <button type="button" class="btn btn-p btn-full" onclick="doSignup()">📝 Sign Up</button>
+      <div style="text-align:center;margin-top:12px;font-size:.85em;color:var(--dim)">
+        Already have account? <a href="javascript:void(0)" onclick="showLogin()" style="color:var(--acc);text-decoration:none">Login</a>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- ==================== MAIN APP (Hidden initially) ==================== -->
-<div id="main-app" style="display:none">
+<div id="mainApp" style="display:none">
 
   <!-- HEADER -->
   <div class="hdr">
     <h1>⚔️ BGMI TOURNAMENT</h1>
     <p>Organize • Play • Win 🏆</p>
     <div class="hdr-btns">
-      <div class="hdr-user" id="hdr-user"></div>
+      <div class="hdr-user" id="userName"></div>
       <button onclick="doLogout()" title="Logout">🚪</button>
     </div>
   </div>
@@ -504,161 +530,104 @@ async function fbSyncAll(){
 }
 
 // ==================== AUTH ====================
-function showAuthTab(tab){
-  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
-  // Clear form fields and errors
-  document.getElementById('login-email').value='';
-  document.getElementById('login-pass').value='';
-  document.getElementById('signup-name').value='';
-  document.getElementById('signup-email').value='';
-  document.getElementById('signup-phone').value='';
-  document.getElementById('signup-bgminame').value='';
-  document.getElementById('signup-pass').value='';
-  const errEl=document.getElementById('login-error');
-  if(errEl)errEl.style.display='none';
-  if(tab==='login'){
-    document.querySelectorAll('.auth-tab')[0].classList.add('active');
-    document.getElementById('login-form').classList.add('active');
-    setTimeout(()=>{try{document.getElementById('login-email').focus();}catch(e){}},200);
-  } else {
-    document.querySelectorAll('.auth-tab')[1].classList.add('active');
-    document.getElementById('signup-form').classList.add('active');
-    setTimeout(()=>{try{document.getElementById('signup-name').focus();}catch(e){}},200);
-  }
+function showSignup(){
+  document.getElementById('loginForm').classList.remove('active');
+  document.getElementById('signupForm').classList.add('active');
+}
+function showLogin(){
+  document.getElementById('signupForm').classList.remove('active');
+  document.getElementById('loginForm').classList.add('active');
 }
 
-async function doLogin(){
-  if(!window._loginGuard)window._loginGuard=0;
-  const now=Date.now();
-  if(now-window._loginGuard<500)return;
-  window._loginGuard=now;
-  const emailEl=document.getElementById('login-email');
-  const passEl=document.getElementById('login-pass');
-  const loginInput=emailEl.value||'';
-  const passInput=passEl.value||'';
-  const email=loginInput.trim().toLowerCase();
-  const pass=passInput.trim();
-  const errEl=document.getElementById('login-error');
-  errEl.style.display='none';
-  if(!email||!pass){ errEl.textContent='❌ Email aur Password dono daalo!'; errEl.style.display='block'; return; }
+// ===== EYE BUTTON =====
+(function(){
+  function setupEye(eyeId,inputId){
+    var btn=document.getElementById(eyeId);
+    var inp=document.getElementById(inputId);
+    if(!btn||!inp)return;
+    function toggle(e){
+      e.preventDefault();
+      if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+      else{inp.type='password';btn.textContent='👁️';}
+    }
+    btn.addEventListener('click',toggle);
+    btn.addEventListener('touchend',toggle);
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    setupEye('loginEye','loginPass');
+    setupEye('signupEye','signupPass');
+  });
+})();
 
-  if(FB_OK){
-    try{
-      // Convert bare username to email if needed
-      const fbEmail = email.includes('@') ? email : email + '@bgmi.app';
-      const cred = await auth.signInWithEmailAndPassword(fbEmail, pass);
-      const uid = cred.user.uid;
-      // Check admin
-      const adminDoc = await db.collection('admins').doc(uid).get();
-      let userData = { id:uid, email:fbEmail, name:cred.user.displayName||fbEmail.split('@')[0], role:'player' };
-      if(adminDoc.exists){
-        userData.role = 'admin';
-        userData.name = adminDoc.data().name || 'Mohit Kumar';
-      }
-      // Also check users collection
-      const userSnap = await db.collection('users').doc(uid).get();
-      if(userSnap.exists) userData = {...userData, ...userSnap.data()};
-      currentUser = userData;
-      localStorage.setItem('bgmi-user', JSON.stringify(currentUser));
-      enterApp();
-    }catch(e){
-      const msg = e.code==='auth/user-not-found'?'❌ Account nahi mila! Pehle Sign Up karo.':
-                  e.code==='auth/wrong-password'||e.code==='auth/invalid-login-credentials'?'❌ Galat password!':
-                  e.code==='auth/invalid-email'?'❌ Sahi email daalo (example@email.com)':
-                  e.code==='auth/too-many-requests'?'❌ Bahut try kar liye! Thoda ruko.':'❌ Login failed: '+e.message;
-      errEl.textContent=msg; errEl.style.display='block';
-    }
-  } else {
-    // Fallback: localStorage
-    const isAdminEmail = (email==='ladakusena01'||email==='admin@rcb.com'||email==='admin');
-    const isAdminPass = (pass==='Mohit@kumar1234');
-    if(isAdminEmail&&isAdminPass){
-      currentUser={id:'admin',name:'Mohit Kumar',email:'ladakusena01',role:'admin'};
-      localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
-      enterApp(); return;
-    }
-    const user = D.users.find(u=>u.email.toLowerCase()===email&&u.pass===pass);
-    if(!user){
-      const emailExists=D.users.find(u=>u.email.toLowerCase()===email);
-      errEl.textContent=emailExists?'❌ Galat password hai!':'❌ Ye email registered nahi hai! Pehle Sign Up karo.';
-      errEl.style.display='block'; return;
-    }
-    currentUser=user;
-    localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
+// ===== SIGNUP =====
+function doSignup(){
+  var name=document.getElementById('signupName').value.trim();
+  var email=document.getElementById('signupEmail').value.trim();
+  var phone=document.getElementById('signupPhone').value.trim();
+  var bgmi=document.getElementById('signupBgmi').value.trim();
+  var pass=document.getElementById('signupPass').value.trim();
+  if(!name||!email||!phone||!bgmi||!pass){alert('❌ Sab fields bharo!');return;}
+  if(pass.length<6){alert('❌ Password kam se kam 6 characters ka hona chahiye!');return;}
+  var users=JSON.parse(localStorage.getItem('bgmi_users')||'[]');
+  if(users.find(function(u){return u.email===email;})){alert('❌ Yeh email pehle se registered hai!');return;}
+  var newUser={name:name,email:email,phone:phone,bgmi:bgmi,pass:pass,role:'player',joinedAt:new Date().toISOString()};
+  users.push(newUser);
+  localStorage.setItem('bgmi_users',JSON.stringify(users));
+  localStorage.setItem('bgmi_loggedIn',JSON.stringify(newUser));
+  currentUser={id:email,name:name,email:email,role:'player',bgmi:bgmi,phone:phone};
+  addAct('👤 "'+name+'" ne sign up kiya!');
+  enterApp();
+}
+
+// ===== LOGIN =====
+function doLogin(){
+  var email=document.getElementById('loginEmail').value.trim();
+  var pass=document.getElementById('loginPass').value.trim();
+  if(!email||!pass){alert('❌ Email aur password daalo!');return;}
+  // Admin check
+  if(email==='admin@bgmi.com'&&pass==='admin123'){
+    currentUser={id:'admin',name:'Admin',email:email,role:'admin'};
+    localStorage.setItem('bgmi_loggedIn',JSON.stringify(currentUser));
+    addAct('👑 Admin login!');
     enterApp();
+    return;
   }
+  // Player check
+  var users=JSON.parse(localStorage.getItem('bgmi_users')||'[]');
+  var user=users.find(function(u){return u.email===email&&u.pass===pass;});
+  if(!user){
+    var exists=users.find(function(u){return u.email===email;});
+    if(exists) alert('❌ Galat password!');
+    else alert('❌ Email registered nahi hai! Pehle Sign Up karo.');
+    return;
+  }
+  currentUser={id:user.email,name:user.name,email:user.email,role:'player',bgmi:user.bgmi,phone:user.phone};
+  localStorage.setItem('bgmi_loggedIn',JSON.stringify(currentUser));
+  addAct('🔑 "'+user.name+'" ne login kiya!');
+  enterApp();
 }
 
-async function doSignup(){
-  if(!window._signupGuard)window._signupGuard=0;
-  const now=Date.now();
-  if(now-window._signupGuard<500)return;
-  window._signupGuard=now;
-  const name=document.getElementById('signup-name').value.trim();
-  const emailRaw=document.getElementById('signup-email').value.trim().toLowerCase();
-  const phone=document.getElementById('signup-phone').value.trim();
-  const bgminame=document.getElementById('signup-bgminame').value.trim();
-  const pass=document.getElementById('signup-pass').value;
-  if(!name||!emailRaw||!pass){toast('❌ Name, Email aur Password zaruri hai!');return;}
-
-  if(FB_OK){
-    try{
-      const cred = await auth.createUserWithEmailAndPassword(emailRaw, pass);
-      const uid = cred.user.uid;
-      // Save user profile to Firestore
-      const userData = { id:uid, name, email:emailRaw, phone, bgminame, role:'player', created:Date.now() };
-      await db.collection('users').doc(uid).set(userData);
-      // First user becomes admin
-      const userCount = (await db.collection('users').get()).size;
-      if(userCount === 1){
-        userData.role = 'admin';
-        await db.collection('users').doc(uid).update({role:'admin'});
-        await db.collection('admins').doc(uid).set({name,email:emailRaw});
-        toast('👑 First user! You are now the ADMIN.');
-      }
-      // Save to local users array too
-      const idx = D.users.findIndex(u=>u.id===uid);
-      if(idx>=0) D.users[idx]=userData; else D.users.push(userData);
-      save();
-      currentUser=userData;
-      localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
-      addAct(`👤 \"${name}\" ne Firebase se sign up kiya!`);
-      enterApp();
-    }catch(e){
-      const msg = e.code==='auth/email-already-in-use'?'❌ Email already registered! Login karo.':
-                  e.code==='auth/weak-password'?'❌ Password kam se kam 6 characters ka daalo.':
-                  e.code==='auth/invalid-email'?'❌ Sahi email daalo.':'❌ Signup failed: '+e.message;
-      toast(msg);
-    }
-  } else {
-    // Fallback: localStorage
-    if(D.users.find(u=>u.email.toLowerCase()===emailRaw)){toast('❌ Email already registered!');return;}
-    const user={id:gid(),name,email:emailRaw,phone,bgminame,pass,role:'player',created:Date.now()};
-    D.users.push(user);
-    addAct(`👤 \"${name}\" ne sign up kiya!`);
-    save();
-    currentUser=user;
-    localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
-    enterApp();
-  }
-}
-
-async function doLogout(){
-  if(FB_OK){
-    try{ await auth.signOut(); }catch(e){}
-  }
-  currentUser=null;
+// ===== LOGOUT =====
+function doLogout(){
+  localStorage.removeItem('bgmi_loggedIn');
   localStorage.removeItem('bgmi-user');
-  document.getElementById('main-app').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
+  currentUser=null;
+  location.reload();
 }
 
+// ===== ENTER APP =====
 function enterApp(){
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('main-app').style.display='block';
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+  var el=document.getElementById('userName');
+  if(el&&currentUser){
+    var roleBadge=currentUser.role==='admin'?' <span class="hdr-role admin">ADMIN</span>':' <span class="hdr-role player">PLAYER</span>';
+    el.innerHTML=currentUser.name+roleBadge;
+  }
   buildNav();
   renderAll();
+  // Check broadcast notifications after entering
+  setTimeout(function(){try{checkBroadcastNotifications();}catch(e){}},1000);
 }
 
 // ==================== NAVIGATION ====================
@@ -724,19 +693,7 @@ document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=
 // ==================== TOAST ====================
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-function togglePass(id){
-  const inp=document.getElementById(id);
-  if(!inp)return;
-  if(!window._toggleGuard)window._toggleGuard={};
-  const now=Date.now();
-  if(window._toggleGuard[id]&&now-window._toggleGuard[id]<300)return;
-  window._toggleGuard[id]=now;
-  const isPass=inp.type==='password';
-  inp.type=isPass?'text':'password';
-  const eye=id==='login-pass'?'eye-login':'eye-signup';
-  const eyeEl=document.getElementById(eye);
-  if(eyeEl)eyeEl.textContent=isPass?'🙈':'👁️';
-}
+// togglePass removed — new eye-btn system in auth section
 
 // ==================== SETTINGS ====================
 function saveSettings(){
@@ -1225,7 +1182,7 @@ function renderDashPlayer(){
   el.innerHTML=`
     <div class="player-welcome">
       <h2>Welcome, ${currentUser.name}! 🎮</h2>
-      <p>BGMI Name: ${currentUser.bgminame||'Not set'}</p>
+      <p>BGMI Name: ${currentUser.bgmi||'Not set'}</p>
     </div>
     <div class="icon-cards">
       <div class="icard" onclick="go('my-tournaments')">
@@ -1436,32 +1393,32 @@ function tAgo(ts){const d=Date.now()-ts;if(d<60000)return'abhi';if(d<3600000)ret
 
 // ==================== INIT ====================
 load();
-// Firebase auth state listener - handles session restore
-function initAuthState(){
-  if(typeof auth !== 'undefined' && FB_OK){
-    auth.onAuthStateChanged(function(fbUser){
-      if(fbUser){
-        var saved=localStorage.getItem('bgmi-user');
-        if(saved){ try{ currentUser=JSON.parse(saved); enterApp(); }catch(e){} return; }
-        // Restore from Firestore
-        db.collection('users').doc(fbUser.uid).get().then(function(doc){
-          var base = {id:fbUser.uid, email:fbUser.email, name:fbUser.email.split('@')[0], role:'player'};
-          if(doc.exists) base = {...base, ...doc.data()};
-          db.collection('admins').doc(fbUser.uid).get().then(function(adoc){
-            if(adoc.exists) base.role='admin';
-            currentUser=base;
-            localStorage.setItem('bgmi-user',JSON.stringify(currentUser));
-            enterApp();
-          }).catch(function(){ currentUser=base; localStorage.setItem('bgmi-user',JSON.stringify(currentUser)); enterApp(); });
-        }).catch(function(){ /* Firestore not ready */ });
+// ===== AUTO LOGIN CHECK =====
+(function(){
+  var saved=localStorage.getItem('bgmi_loggedIn');
+  if(saved){
+    try{
+      var user=JSON.parse(saved);
+      if(user&&user.email){
+        var users=JSON.parse(localStorage.getItem('bgmi_users')||'[]');
+        var fullUser=users.find(function(u){return u.email===user.email;});
+        if(fullUser){
+          currentUser={id:fullUser.email,name:fullUser.name,email:fullUser.email,role:fullUser.role,bgmi:fullUser.bgmi,phone:fullUser.phone};
+        } else {
+          currentUser=user;
+        }
+        if(document.readyState==='loading'){
+          document.addEventListener('DOMContentLoaded',function(){enterApp();setTimeout(checkBroadcastNotifications,1000);});
+        } else {
+          enterApp();
+          setTimeout(checkBroadcastNotifications,1000);
+        }
       }
-    });
+    }catch(e){
+      localStorage.removeItem('bgmi_loggedIn');
+    }
   }
-}
-initAuthState();
-// Fallback: localStorage check (for non-Firebase mode or immediate session)
-var savedUser=localStorage.getItem('bgmi-user');
-if(savedUser && !currentUser){ try{currentUser=JSON.parse(savedUser);enterApp();}catch(e){} }
+})();
 
 // ==================== BROADCAST NOTIFICATIONS ====================
 function checkBroadcastNotifications(){
@@ -1472,7 +1429,6 @@ function checkBroadcastNotifications(){
   const newBcs=(D.broadcasts||[]).filter(b=>myTourIds.includes(b.tournamentId)&&b.created>lastCheck);
   if(newBcs.length>0){
     localStorage.setItem('bgmi-last-bc-check',Date.now().toString());
-    // Show notification after a short delay
     setTimeout(function(){
       newBcs.forEach(function(b){
         var overlay=document.createElement('div');
@@ -1495,13 +1451,6 @@ function checkBroadcastNotifications(){
     },currentUser?1000:5000);
   }
 }
-// Call after enterApp
-var origEnter=enterApp;
-enterApp=function(){origEnter();checkBroadcastNotifications();};
-
-// No duplicate bindEye needed - onclick in HTML handles it
-// No duplicate login/signup listener needed - onclick in HTML handles it
-// Touch support via ontouchend on buttons (see HTML)
 
 </script>
 </body>
