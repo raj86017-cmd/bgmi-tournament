@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="v14">
+<meta name="version" content="v15">
 <meta name="theme-color" content="#ff4655">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -209,7 +209,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Password</label>
         <div class="pass-wrap">
           <input type="password" id="loginPass" placeholder="Password">
-          <button type="button" id="loginEye" class="eye-btn">👁️</button>
+          <button type="button" id="loginEye" class="eye-btn" onclick="togglePass('loginPass',this)" ontouchend="togglePass('loginPass',this)">👁️</button>
         </div>
       </div>
       <button type="button" class="btn btn-p btn-full" onclick="doLogin()">🔑 Login</button>
@@ -237,7 +237,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Password</label>
         <div class="pass-wrap">
           <input type="password" id="signupPass" placeholder="Password (min 6 chars)">
-          <button type="button" id="signupEye" class="eye-btn">👁️</button>
+          <button type="button" id="signupEye" class="eye-btn" onclick="togglePass('signupPass',this)" ontouchend="togglePass('signupPass',this)">👁️</button>
         </div>
       </div>
       <button type="button" class="btn btn-p btn-full" onclick="doSignup()">📝 Sign Up</button>
@@ -543,30 +543,18 @@ function showLogin(){
   document.getElementById('signupErr').style.display='none';
 }
 
-// ===== EYE BUTTON =====
-(function(){
-  function setupEye(eyeId,inputId){
-    var btn=document.getElementById(eyeId);
-    var inp=document.getElementById(inputId);
-    if(!btn||!inp)return;
-    var lastTime=0;
-    function toggle(e){
-      e.preventDefault();
-      e.stopPropagation();
-      var now=Date.now();
-      if(now-lastTime<500)return;
-      lastTime=now;
-      if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
-      else{inp.type='password';btn.textContent='👁️';}
-    }
-    btn.addEventListener('click',toggle,false);
-    btn.addEventListener('touchend',toggle,{passive:false});
-  }
-  document.addEventListener('DOMContentLoaded',function(){
-    setupEye('loginEye','loginPass');
-    setupEye('signupEye','signupPass');
-  });
-})();
+// ===== EYE BUTTON — simple global function =====
+// Direct onclick/ontouchend on HTML — koi DOMContentLoaded/addEventListener dependency nahi
+var _eyeGuard={};
+function togglePass(inputId,btn){
+  var now=Date.now();
+  if(_eyeGuard[inputId]&&now-_eyeGuard[inputId]<500)return;
+  _eyeGuard[inputId]=now;
+  var inp=document.getElementById(inputId);
+  if(!inp)return;
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁️';}
+}
 
 // ===== ENTER KEY SUPPORT =====
 // Mobile keyboard "Go" button se login/signup trigger
