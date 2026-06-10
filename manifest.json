@@ -1,18 +1,14 @@
 {
-  "name": "BGMI Tournament Manager",
-  "short_name": "BGMI Tournaments",
-  "description": "BGMI Tournament Organize, Play & Win",
-  "start_url": "/index.html",
+  "name": "BGMI Tournament",
+  "short_name": "BGMI Tour",
+  "description": "Organize and participate in BGMI tournaments",
+  "start_url": "/bgmi-tournament/index.html",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#ff4655",
   "orientation": "portrait",
+  "background_color": "#0a0a1a",
+  "theme_color": "#ff4655",
+  "categories": ["games", "social"],
   "icons": [
-    {
-      "src": "icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png"
-    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",
@@ -22,12 +18,6 @@
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
     }
   ]
 }
