@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="v19">
+<meta name="version" content="v20">
 <meta name="theme-color" content="#ff4655">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -210,7 +210,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Password</label>
         <div class="pass-wrap">
           <input type="password" id="loginPass" placeholder="Password">
-          <button type="button" id="loginEye" class="eye-btn" onclick="togglePass()">👁️</button>
+          <button type="button" id="loginEye" class="eye-btn" onclick="togglePass()" ontouchend="togglePass()">👁️</button>
         </div>
       </div>
       <button type="button" class="btn btn-p btn-full" onclick="doLogin()">🔑 Login</button>
@@ -238,7 +238,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Password</label>
         <div class="pass-wrap">
           <input type="password" id="signupPass" placeholder="Password (min 6 chars)">
-          <button type="button" id="signupEye" class="eye-btn" onclick="togglePassSignup()">👁️</button>
+          <button type="button" id="signupEye" class="eye-btn" onclick="togglePassSignup()" ontouchend="togglePassSignup()">👁️</button>
         </div>
       </div>
       <button type="button" class="btn btn-p btn-full" onclick="doSignup()">📝 Sign Up</button>
@@ -544,25 +544,43 @@ function showLogin(){
   document.getElementById('signupErr').style.display='none';
 }
 
-// ===== EYE BUTTON — EXACTLY like test page =====
+// ===== EYE BUTTON — ULTIMATE FIX =====
+// Teen tarike se trigger: onclick + ontouchend + addEventListener
 function togglePass(){
-  var inp=document.getElementById('loginPass');
-  var btn=document.getElementById('loginEye');
-  if(!inp||!btn)return;
-  var pw=inp.type==='password';
-  inp.type=pw?'text':'password';
-  btn.textContent=pw?'🙈':'👁️';
-  btn.innerHTML=pw?'🙈':'👁️';
+  try{
+    alert('👁️ togglePass CALLED!');
+    var inp=document.getElementById('loginPass');
+    var btn=document.getElementById('loginEye');
+    alert('👁️ inp='+(inp?'FOUND':'NULL')+' btn='+(btn?'FOUND':'NULL'));
+    if(!inp||!btn)return;
+    var pw=inp.type==='password';
+    inp.type=pw?'text':'password';
+    btn.textContent=pw?'🙈':'👁️';
+    btn.innerHTML=pw?'🙈':'👁️';
+    alert('👁️ Done! Password now: '+inp.type);
+  }catch(e){alert('👁️ ERROR: '+e.message);}
 }
 function togglePassSignup(){
-  var inp=document.getElementById('signupPass');
-  var btn=document.getElementById('signupEye');
-  if(!inp||!btn)return;
-  var pw=inp.type==='password';
-  inp.type=pw?'text':'password';
-  btn.textContent=pw?'🙈':'👁️';
-  btn.innerHTML=pw?'🙈':'👁️';
+  try{
+    alert('👁️ SIGNUP togglePassSignup CALLED!');
+    var inp=document.getElementById('signupPass');
+    var btn=document.getElementById('signupEye');
+    alert('👁️ inp='+(inp?'FOUND':'NULL')+' btn='+(btn?'FOUND':'NULL'));
+    if(!inp||!btn)return;
+    var pw=inp.type==='password';
+    inp.type=pw?'text':'password';
+    btn.textContent=pw?'🙈':'👁️';
+    btn.innerHTML=pw?'🙈':'👁️';
+    alert('👁️ Done! Password now: '+inp.type);
+  }catch(e){alert('👁️ ERROR: '+e.message);}
 }
+// Backup: addEventListener se bhi try karo
+document.addEventListener('DOMContentLoaded',function(){
+  var le=document.getElementById('loginEye');
+  if(le){le.addEventListener('click',togglePass);le.addEventListener('touchend',function(e){e.preventDefault();togglePass();});}
+  var se=document.getElementById('signupEye');
+  if(se){se.addEventListener('click',togglePassSignup);se.addEventListener('touchend',function(e){e.preventDefault();togglePassSignup();});}
+});
 
 // ===== ENTER KEY SUPPORT =====
 // Mobile keyboard "Go" button se login/signup trigger
